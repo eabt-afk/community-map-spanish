@@ -1,0 +1,386 @@
+<script>
+(function(){
+  const CSV_URL='https://docs.google.com/spreadsheets/d/e/2PACX-1vR1A8WkC-BbA94Ipm6Sit3qx5ndFoTG-zBBqnZPkNDEvHa11O0BJTRCWepWyo6RhqH58ZK1kQXO9v6P/pub?gid=1272818494&single=true&output=csv';
+  const TILE_URL='https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png';
+  const ATTRIB='&copy; OpenStreetMap &copy; CARTO';
+  const MARKER_STYLE={radius:6,weight:1.5,color:'var(--hotpink-border)',fillColor:'var(--hotpink)',fillOpacity:0.9};
+
+  /* === Language state & dictionaries === */
+  let lang='en'; // 'en' or 'es'
+
+  const L10N = {
+    en: {
+      searchLabel: 'Search',
+      searchPlaceholder: 'Search partners, services, or notes…',
+      practiceAreas: 'Practice Areas',
+      clearFilters: 'Clear filters',
+      sortBy: 'Sort by',
+      partners: 'Partners',
+      about: 'About',
+      intake: 'Intake',
+      geo: 'Geographic Eligibility',
+      fin: 'Financial Eligibility',
+      address: 'Address',
+      website: 'Website',
+      empty: 'Select a partner from the list of names to find out more!'
+    },
+    es: {
+      searchLabel: 'Buscar',
+      searchPlaceholder: 'Buscar organizaciones, servicios o notas…',
+      practiceAreas: 'Áreas de práctica',
+      clearFilters: 'Borrar filtros',
+      sortBy: 'Ordenar por',
+      partners: 'Aliados',
+      about: 'Acerca de',
+      intake: 'Admisión',
+      geo: 'Elegibilidad geográfica',
+      fin: 'Elegibilidad financiera',
+      address: 'Dirección',
+      website: 'Sitio web',
+      empty: '¡Selecciona un aliado para ver más información!'
+    }
+  };
+  const t=(key)=> (L10N[lang] && L10N[lang][key]) || key;
+
+  /* === Field aliases (English + Spanish fallbacks) === */
+  const FIELD_ALIASES={
+    // If you add *_es columns, they’ll be preferred when lang==='es'
+    name:        ['_Name','Name','_Name_es','Name_es'],
+    address:     ['_Address','Address','_Address_es','Address_es','Location','Street'],
+    lat:         ['_Latitude','Latitude','Lat'],
+    lng:         ['_Longitude','Longitude','Lng','Long'],
+    website:     ['_Website','Website','URL'],
+    description: ['_Description','Description','Notes','_Description_es','Description_es'],
+    category:    ['_Category','Category','Main Practice areas','Main Practice Areas','_Category_es','Category_es'],
+    primary:     ['_PrimaryCategory','PrimaryCategory','_PrimaryCategory_es','PrimaryCategory_es'],
+    intake:      ['_Intake','Intake','_Intake_es','Intake_es'],
+    geoElig:     ['_GeographicEligibility','Geographic Eligibility','_GeographicEligibility_es','Geographic_Eligibility_es'],
+    finElig:     ['_FinancialEligibility','Financial Eligibility','_FinancialEligibility_es','Financial_Eligibility_es'],
+    logo:        ['_Logo','Logo']
+  };
+
+  const els={
+    search:document.getElementById('search'),
+    sort:document.getElementById('sort'),
+    cats:document.getElementById('category-filters'),
+    clearCats:document.getElementById('clear-cats'),
+    list:document.getElementById('list'),
+    detail:document.getElementById('detail'),
+    // labels/headings we’ll update on language switch:
+    filtersbar: document.querySelector('.filtersbar'),
+    lblSearch:  document.querySelector('.filtersbar .row label'),
+    lblPractice: document.querySelector('.filtersbar .row-inline label'),
+    btnClear:   document.getElementById('clear-cats'),
+    lblSort:    document.querySelectorAll('.filtersbar .row label')[2], // 3rd label
+    partnersHeader: document.querySelector('.legend-header span'),
+    langToggle: document.getElementById('lang-toggle')
+  };
+
+  let data=[],filtered=[],activeId=null,currentBounds=null;
+  const practiceAreas=new Set();
+
+  // Map
+  const map=L.map('map',{zoomControl:true,attributionControl:true});
+  L.tileLayer(TILE_URL,{maxZoom:19,attribution:ATTRIB}).addTo(map);
+  const layerGroup=L.layerGroup().addTo(map);
+  const markers=[];
+
+  // Header mapping helpers
+  let headerMap={};
+  function buildHeaderMap(fields){
+    headerMap={};
+    (fields||[]).forEach(h=>{
+      if(!h) return;
+      headerMap[h]=h;
+      headerMap[String(h).toLowerCase()]=h;
+      headerMap[String(h).trim().toLowerCase()]=h;
+    });
+  }
+
+  // pick with alias list; prefers *_es when lang==='es' but falls back safely
+  function pick(row, keys){
+    // reorder keys to prefer *_es entries if lang is 'es'
+    const ordered = (lang==='es')
+      ? [...keys.filter(k=>String(k).toLowerCase().endsWith('_es')), ...keys.filter(k=>!String(k).toLowerCase().endsWith('_es'))]
+      : keys;
+
+    for(const k of ordered){
+      // direct key
+      if(row[k]!==undefined && String(row[k]).trim()!=='') return String(row[k]).trim();
+
+      // headerMap indirection
+      const norm=String(k||'').trim().toLowerCase();
+      const real=headerMap[norm];
+      if(real && row[real]!==undefined && String(row[real]).trim()!=='') return String(row[real]).trim();
+    }
+    return '';
+  }
+
+  const splitCats = s => (s||'').split(/[,;]/).map(v=>v.trim()).filter(Boolean);
+
+  function popupHTML(r){
+    const name=pick(r,FIELD_ALIASES.name)||'Untitled';
+    const addr=pick(r,FIELD_ALIASES.address);
+    const site=pick(r,FIELD_ALIASES.website);
+    const cats=splitCats(pick(r,FIELD_ALIASES.category));
+    const addrHtml=addr?`<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addr)}" target="_blank" rel="noopener">${addr}</a>`:'';
+    return `<div style="font-family:'Raleway';font-size:13px">
+      <div style="font-weight:600">${name}</div>
+      ${addrHtml?`<div>${addrHtml}</div>`:''}
+      ${cats.length?`<div style="color:#6b7280;font-size:12px">${cats.join(', ')}</div>`:''}
+      ${site?`<a href="${site}" target="_blank" rel="noopener">${t('website').toLowerCase()}</a>`:''}
+    </div>`;
+  }
+
+  function boundsFromRows(rows){
+    const b=L.latLngBounds([]);
+    rows.forEach(r=>{
+      const lat=parseFloat(pick(r,FIELD_ALIASES.lat));
+      const lng=parseFloat(pick(r,FIELD_ALIASES.lng));
+      if(!isNaN(lat)&&!isNaN(lng)) b.extend([lat,lng]);
+    });
+    return b.isValid()? b : L.latLngBounds([[41.85,-87.75],[42.05,-87.55]]);
+  }
+
+  // Render category chips from the localized categories
+  function renderCategories(){
+    els.cats.innerHTML='';
+    // rebuild practiceAreas each time in case language changed
+    const set=new Set();
+    data.forEach(r=>{
+      splitCats(pick(r,FIELD_ALIASES.category)).forEach(c=>c && set.add(c));
+    });
+    // show in UI
+    Array.from(set).sort((a,b)=>a.localeCompare(b)).forEach(cat=>{
+      const span=document.createElement('span');
+      span.className='chip';
+      span.textContent=cat; span.dataset.value=cat;
+      span.onclick=()=>{span.classList.toggle('active');applyFilters();};
+      els.cats.appendChild(span);
+    });
+  }
+
+  function clearCategoryFilters(){
+    els.cats.querySelectorAll('.chip.active').forEach(ch=>ch.classList.remove('active'));
+    applyFilters();
+  }
+
+  // Logo markers (fallback to circle)
+  function renderMarkers(rows){
+    layerGroup.clearLayers();markers.length=0;
+    rows.forEach(r=>{
+      const lat=parseFloat(pick(r,FIELD_ALIASES.lat));
+      const lng=parseFloat(pick(r,FIELD_ALIASES.lng));
+      if(isNaN(lat)||isNaN(lng))return;
+
+      const logo=pick(r,FIELD_ALIASES.logo);
+      let m;
+      if(logo){
+        const icon=L.icon({iconUrl:logo,iconSize:[40,40],iconAnchor:[20,40],popupAnchor:[0,-38],className:'partner-logo-icon'});
+        m=L.marker([lat,lng],{icon});
+      } else {
+        m=L.circleMarker([lat,lng],MARKER_STYLE);
+      }
+
+      m.__id=r.__id;
+      m.bindPopup(popupHTML(r),{maxWidth:300,autoPan:true,autoPanPadding:[30,30]});
+      m.on('click',()=>{selectById(r.__id,true);map.once('moveend',()=>m.openPopup());m.openPopup();});
+      m.on('popupclose',()=>{
+        if(activeId===m.__id){
+          activeId=null;
+          renderDetail(null);
+          document.querySelectorAll('.legend-list .item').forEach(el=>el.classList.remove('active'));
+        }
+        if(currentBounds) map.fitBounds(currentBounds,{padding:[20,20]});
+      });
+      markers.push(m);layerGroup.addLayer(m);
+    });
+    currentBounds=boundsFromRows(rows);
+    map.fitBounds(currentBounds,{padding:[20,20]});
+  }
+
+  function renderList(rows){
+    els.list.innerHTML=rows.map(r=>{
+      const id=r.__id;const name=pick(r,FIELD_ALIASES.name)||'Untitled';
+      return `<div class="item${activeId===id?' active':''}" data-id="${id}" role="option" tabindex="0">
+        <h4>${name}</h4>
+        <div class="meta" style="display:none"></div>
+      </div>`;
+    }).join('');
+    els.list.querySelectorAll('.item').forEach(el=>{
+      el.addEventListener('click',()=>{
+        const id=Number(el.dataset.id);
+        selectById(id,true);
+        const m=markers.find(mm=>mm.__id===id);
+        if(m){map.once('moveend',()=>m.openPopup());m.openPopup();}
+      });
+    });
+  }
+
+  function renderDetail(r){
+    if(!r){
+      els.detail.innerHTML=`<div class="empty">${t('empty')}</div>`;
+      return;
+    }
+    const name=pick(r,FIELD_ALIASES.name)||'Untitled';
+    const logo=pick(r,FIELD_ALIASES.logo);
+    const addr=pick(r,FIELD_ALIASES.address);
+    const site=pick(r,FIELD_ALIASES.website);
+    const desc=pick(r,FIELD_ALIASES.description);
+    const cats=splitCats(pick(r,FIELD_ALIASES.category));
+    const intake=pick(r,FIELD_ALIASES.intake);
+    const geo=pick(r,FIELD_ALIASES.geoElig);
+    const fin=pick(r,FIELD_ALIASES.finElig);
+    const addrHtml=addr?`<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addr)}" target="_blank" rel="noopener">${addr}</a>`:'';
+
+    els.detail.innerHTML=`
+      <div class="detail-header">
+        <div class="titlewrap">
+          ${logo ? `<img class="detail-logo" src="${logo}" alt="${name} logo" loading="lazy">` : ``}
+          <h2>${name}</h2>
+        </div>
+        <button class="detail-close" id="detail-close" aria-label="Close">×</button>
+      </div>
+      ${cats.length?`<div>${cats.map(c=>`<span class="pill">${c}</span>`).join('')}</div>`:''}
+      ${addrHtml?`<div class="kv"><b>${t('address')}:</b> ${addrHtml}</div>`:''}
+      ${site?`<div class="kv"><b>${t('website')}:</b> <a href="${site}" target="_blank" rel="noopener">${site}</a></div>`:''}
+      ${desc?`<div class="section-title">${t('about')}</div><div>${desc}</div>`:''}
+      ${intake?`<div class="section-title">${t('intake')}</div><div>${intake}</div>`:''}
+      ${geo?`<div class="section-title">${t('geo')}</div><div>${geo}</div>`:''}
+      ${fin?`<div class="section-title">${t('fin')}</div><div>${fin}</div>`:''}
+    `;
+
+    const closeBtn=document.getElementById('detail-close');
+    if(closeBtn){
+      closeBtn.addEventListener('click',()=>{
+        activeId=null;
+        els.detail.innerHTML=`<div class="empty">${t('empty')}</div>`;
+        markers.forEach(m=>m.closePopup());
+        if(currentBounds) map.fitBounds(currentBounds,{padding:[20,20]});
+        document.querySelectorAll('.legend-list .item').forEach(el=>el.classList.remove('active'));
+      });
+    }
+  }
+
+  function selectById(id,moveMap){
+    activeId=id;
+    const row=filtered.find(r=>r.__id===activeId);
+    if(!row) return;
+    renderDetail(row);
+    document.querySelectorAll('.legend-list .item').forEach(el=>el.classList.toggle('active', Number(el.dataset.id)===activeId));
+    if(moveMap){
+      const lat=parseFloat(pick(row,FIELD_ALIASES.lat));
+      const lng=parseFloat(pick(row,FIELD_ALIASES.lng));
+      if(!isNaN(lat)&&!isNaN(lng)){
+        map.setView([lat,lng], Math.max(map.getZoom(), 14), {animate:true, duration:0.35});
+      }
+    }
+  }
+
+  function applyFilters(){
+    const q=(els.search.value||'').toLowerCase();
+    const activeCats=Array.from(els.cats.querySelectorAll('.chip.active')).map(x=>x.dataset.value);
+    const sortBy=els.sort.value;
+
+    filtered=data.filter(r=>{
+      const cats=splitCats(pick(r,FIELD_ALIASES.category));
+      const inCat=activeCats.length?cats.some(c=>activeCats.includes(c)):true;
+
+      // Search checks both main and localized fields that appear in UI
+      const hay=[
+        pick(r,FIELD_ALIASES.name),
+        pick(r,FIELD_ALIASES.address),
+        pick(r,FIELD_ALIASES.description),
+        pick(r,FIELD_ALIASES.category),
+        pick(r,FIELD_ALIASES.intake),
+        pick(r,FIELD_ALIASES.geoElig),
+        pick(r,FIELD_ALIASES.finElig)
+      ].filter(Boolean).join(' ').toLowerCase();
+
+      const inSearch=q?hay.includes(q):true;
+      return inCat && inSearch;
+    });
+
+    filtered.sort((a,b)=>{
+      if(sortBy==='primary'){
+        const pa=pick(a,FIELD_ALIASES.primary)||(splitCats(pick(a,FIELD_ALIASES.category))[0]||'');
+        const pb=pick(b,FIELD_ALIASES.primary)||(splitCats(pick(b,FIELD_ALIASES.category))[0]||'');
+        return pa.localeCompare(pb);
+      }
+      if(sortBy==='category'){
+        return pick(a,FIELD_ALIASES.category).localeCompare(pick(b,FIELD_ALIASES.category));
+      }
+      return pick(a,FIELD_ALIASES.name).localeCompare(pick(b,FIELD_ALIASES.name));
+    });
+
+    renderMarkers(filtered);
+    renderList(filtered);
+
+    if(!filtered.find(r=>r.__id===activeId)){
+      activeId=null;
+      renderDetail(null);
+      document.querySelectorAll('.legend-list .item').forEach(el=>el.classList.remove('active'));
+    }
+  }
+
+  // Update static UI strings on language switch
+  function updateStaticUIStrings(){
+    if(els.lblSearch)   els.lblSearch.textContent = t('searchLabel');
+    if(els.search)      els.search.placeholder    = t('searchPlaceholder');
+    if(els.lblPractice) els.lblPractice.textContent = t('practiceAreas');
+    if(els.btnClear)    els.btnClear.textContent  = t('clearFilters');
+    if(els.lblSort)     els.lblSort.textContent   = t('sortBy');
+    if(els.partnersHeader) els.partnersHeader.textContent = t('partners');
+
+    // Toggle button state and title
+    if(els.langToggle){
+      const pressed = (lang==='es');
+      els.langToggle.setAttribute('aria-pressed', pressed ? 'true' : 'false');
+      els.langToggle.textContent = pressed ? 'EN' : 'ES';
+      els.langToggle.title = pressed ? 'Switch to English' : 'Cambiar a español';
+    }
+  }
+
+  // Load CSV and initialize
+  Papa.parse(CSV_URL,{
+    download:true,header:true,skipEmptyLines:true,
+    complete:res=>{
+      const fields = (res.meta && res.meta.fields) || [];
+      buildHeaderMap(fields);
+
+      data=res.data.map((r,idx)=>Object.assign({},r,{__id:idx+1}));
+
+      // First render
+      renderCategories();
+      updateStaticUIStrings();
+      applyFilters();
+
+      // listeners
+      els.search.addEventListener('input',applyFilters);
+      els.sort.addEventListener('change',applyFilters);
+      els.clearCats.addEventListener('click',clearCategoryFilters);
+
+      // language toggle
+      if(els.langToggle){
+        els.langToggle.addEventListener('click',()=>{
+          lang = (lang==='en' ? 'es' : 'en');
+          updateStaticUIStrings();
+          renderCategories(); // recalc chips in new language
+          applyFilters();     // rebuild list/map in new language
+          // if a partner was open, reselect to refresh description in new lang
+          if(activeId){
+            const row=filtered.find(r=>r.__id===activeId);
+            if(row) renderDetail(row); else renderDetail(null);
+          } else {
+            renderDetail(null);
+          }
+        });
+      }
+    },
+    error:err=>{
+      console.error('CSV load error',err);
+      els.detail.innerHTML='<div style="color:#b91c1c">CSV could not be loaded. Make sure the Google Sheet is “Published to the web”.</div>';
+    }
+  });
+})();
+</script>
