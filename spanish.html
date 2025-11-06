@@ -471,10 +471,10 @@ function renderDetail(r){
     ${cats.length?`<div>${cats.map(c=>`<span class="pill">${c}</span>`).join('')}</div>`:''}
     ${addrHtml?`<div class="kv"><b>${t.address}:</b> ${addrHtml}</div>`:''}
     ${site?`<div class="kv"><b>${t.websiteLabel}:</b> <a href="${site}" target="_blank" rel="noopener">${site}</a></div>`:''}
-    ${desc?`<div class="section-title">${t.about}</div><div>${desc}</div>`:''}
-    ${intake?`<div class="section-title">${t.intake}</div><div>${intake}</div>`:''}
-    ${geo?`<div class="section-title">${t.geo}</div><div>${geo}</div>`:''}
-    ${fin?`<div class="section-title">${t.fin}</div><div>${fin}</div>`:''}
+    ${desc?  `<div class="section-title"><strong>${t.about}</strong></div><div>${desc}</div>` : '' }
+    ${intake?`<div class="section-title"><strong>${t.intake}</strong></div><div>${intake}</div>` : '' }
+    ${geo?   `<div class="section-title"><strong>${t.geo}</strong></div><div>${geo}</div>` : '' }
+    ${fin?   `<div class="section-title"><strong>${t.fin}</strong></div><div>${fin}</div>` : '' }
   `;
   const closeBtn=document.getElementById('detail-close');
   if(closeBtn){
