@@ -1,3 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Community Law Office Partners Map</title>
+
+<!-- Raleway font -->
+<link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="anonymous"/>
+
+<style>
+:root{
+  --hotpink: hsla(323, 98%, 49%, 0.9);
+  --hotpink-border: hsla(323, 98%, 35%, 1);
+}
+
+/* Fill iframe height */
+html, body { height: 100%; }
+
+body{
+  margin:0;
+  font-family:"Raleway",system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  background:#000;
+  font-size:14px;
+  min-height:100vh;
+  box-sizing:border-box;
+}
+
+/* Page layout */
+.layout {
+  display:grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr;
+  min-height:100vh;
+  padding:16px;
+  gap:16px;
+  box-sizing:border-box;
+}
+
+/* Stage stacks: top-panels then map below (full width) */
+.stage {
+  display:grid;
+  grid-template-rows: auto auto;  /* top panels auto, map fixed below */
+  gap:32px;
+  height:100%;
+  min-height:0;
+}
+#map { margin-top: 20px; } /* extra spacing below the top panels */
+
+/* Top row with two panels (Partners left, Filters/Detail right) */
+.top-panels {
+  display:grid;
+  grid-template-columns: 260px 1fr; /* Partners fixed at 260px, Filters/Detail take the rest */
+  gap:16px;
+  align-items:stretch;
+}
+/* Panels fill the grid track height */
+.legend, .controls { height: 100%; }
+
+/* Let the right panel stack filters + description vertically */
+.controls {
+  display: flex;
+  flex-direction: column;
+  position: relative; /* for language toggle positioning */
+}
+
+/* Language toggle pill */
+.lang-toggle{
+  position:absolute; top:12px; right:12px;
+  border:1px solid var(--hotpink);
+  background:#fff; color:var(--hotpink);
+  border-radius:999px; padding:6px 10px;
+  font-size:12px; cursor:pointer;
+  font-family:"Raleway", sans-serif; font-weight:700;
+}
+.lang-toggle[aria-pressed="true"]{
+  background:var(--hotpink); color:#fff; border-color:var(--hotpink);
+}
+
+/* Let the description area expand to fill remaining height in the right panel */
+.detail { margin-top: 12px; flex-grow: 1; }
+
+/* Ensure no inner scrolling in the partners list */
+.legend, .legend-list { overflow: visible; }
+
+/* Panels style */
+.controls, .legend {
+  background:#fff;
+  border:1px solid #e5e7eb;
+  border-radius:14px;
+  color:#111;
+  padding:14px;
+  box-shadow:0 2px 8px rgba(0,0,0,.08);
+}
+
+/* Headers hot pink */
+.controls label,
+.legend-header {
+  color: var(--hotpink);
+  font-weight: 800;
+  font-size: 18px;
+  line-height: 1.2;
+}
+
+/* Filters spacing */
+.controls .row { margin-bottom: 16px; }
+.controls .row:last-child { margin-bottom: 0; }
+.row-inline{display:flex;align-items:center;justify-content:space-between;gap:8px}
+
+/* Search input */
+#search {
+  width:100%;
+  padding:10px;
+  border:1px solid #d1d5db;
+  border-radius:10px;
+  background:#fff;
+  color:#111;
+  font-family:"Raleway",sans-serif;
+}
+
+/* Practice area chips */
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip {
+  border: 1px solid var(--hotpink-border);
+  background: var(--hotpink);
+  color: #111;               /* black text per your earlier request */
+  border-radius: 999px;
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 13px;
+  font-family: "Raleway", sans-serif;
+}
+.chip.active {
+  background: #fff;
+  border-color: var(--hotpink);
+  color: var(--hotpink);
+  font-weight: 600;
+}
+#category-filters { margin-bottom: 16px; }
+
+/* Clear button */
+.btn-clear {
+  border: 1px solid var(--hotpink);
+  background: #fff;
+  color: var(--hotpink);
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  font-family: "Raleway", sans-serif;
+}
+.btn-clear:hover { background:#f3f4f6; }
+
+/* Legend (Partners) */
+.legend {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  overflow: visible;
+  color: #111;
+}
+.legend-header {
+  padding:10px 12px;
+  border-bottom:1px solid var(--hotpink);
+}
+.legend-list .item {
+  padding:10px 12px;
+  border-bottom:1px solid #e5e7eb;
+  cursor:pointer;
+}
+.legend-list .item:last-child{border-bottom:none}
+.legend-list h4 {
+  margin:0;
+  font-size:14px;
+  line-height:1.25;
+  color:#111;
+  font-family:"Raleway",sans-serif;
+}
+.legend-list .item.active h4 { color:var(--hotpink); font-weight:700; }
+.legend-list .meta { font-size:12px; color:#555; font-family:"Raleway",sans-serif; }
+/* Hide the meta line under partner names (removes main practice area under name) */
+.legend-list .meta { display: none !important; }
+
+/* Detail card (inside controls, under filters) */
+.detail{
+  background:#fff;
+  border:1px solid #e5e7eb;
+  border-radius:14px;
+  padding:14px;
+  position:relative;
+  font-family:"Raleway",sans-serif;
+  color:#111;
+  margin-top:12px;
+}
+.detail h2{margin:0 0 6px 0;font-size:17px;color:#111}
+.detail .kv{font-size:13px}
+.kv b{font-weight:700}
+.kv a{text-decoration:underline}
+.section-title{margin-top:10px;font-weight:700;font-size:13px}
+
+/* logo inside description */
+.detail-header .titlewrap{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  min-width:0;
+}
+.detail-logo{
+  width:40px;
+  height:40px;
+  border-radius:8px;
+  border:1px solid #e5e7eb;
+  background:#fff;
+  object-fit:contain;
+  flex:0 0 auto;
+}
+.detail h2{
+  margin:0;
+  font-size:17px;
+  color:#111;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+/* Category pills (pink bg + black text per your preference for tags) */
+.pill{
+  display:inline-block;
+  background: var(--hotpink);
+  color:#111;
+  border-radius:999px;
+  padding:2px 8px;
+  font-size:11px;
+  margin:2px 4px 0 0;
+}
+.detail-header{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px}
+.detail-close{border:none;background:#f3f4f6;border-radius:10px;font-size:18px;line-height:1;padding:4px 10px;cursor:pointer}
+.detail-close:hover{background:#e5e7eb}
+.detail .empty{color:var(--hotpink);font-weight:600}
+
+/* Map placed BELOW the top panels (full width) */
+#map{
+  border:1px solid #e5e7eb;
+  border-radius:14px;
+  background:#fff;
+  width:100%;
+  height:650px;   /* adjust as you like */
+  min-height:380px;
+}
+
+/* Grayscale tiles */
+#map .leaflet-tile { filter: grayscale(100%) saturate(0) contrast(1.05); }
+
+/* Logo markers on the map */
+.leaflet-marker-icon.partner-logo-icon {
+  width:40px;
+  height:40px;
+  border-radius:50%;
+  border:2px solid #fff;
+  background:#fff;
+  box-shadow:0 0 6px rgba(0,0,0,.25);
+  object-fit:cover;
+}
+
+/* Leaflet popup styling */
+.leaflet-container .leaflet-popup-content{font-family:"Raleway",system-ui,sans-serif;font-size:13px}
+.leaflet-container .leaflet-popup-content-wrapper{border-radius:10px}
+.leaflet-container .leaflet-popup-tip{opacity:.95}
+
+/* Responsive stacking */
+@media (max-width:1000px){
+  .top-panels { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="layout">
+  <main class="stage">
+
+    <!-- Top: Partners (left) + Filters (with Description) right -->
+    <div class="top-panels">
+
+      <!-- Partners panel -->
+      <aside class="legend">
+        <div class="legend-header"><span id="lbl-partners">Partners</span></div>
+        <div id="list" class="legend-list" role="listbox" aria-label="Partner list"></div>
+      </aside>
+
+      <!-- Filters + Detail panel -->
+      <section class="controls">
+        <!-- Language toggle -->
+        <button id="lang-toggle" class="lang-toggle" type="button" aria-pressed="false" title="Cambiar a español">ES</button>
+
+        <div class="row">
+          <label id="lbl-search">Search</label>
+          <input id="search" type="text" placeholder="Search partners, services, or notes…"/>
+        </div>
+        <div class="row row-inline">
+          <label id="lbl-practice" style="margin:0">Practice Areas</label>
+          <button id="clear-cats" class="btn-clear" type="button">Clear filters</button>
+        </div>
+        <div id="category-filters" class="chips"></div>
+        <div class="row">
+          <label id="lbl-sort">Sort by</label>
+          <select id="sort">
+            <option value="name" id="opt-name">Name (A→Z)</option>
+            <option value="primary" id="opt-primary">Main Practice Area (A→Z)</option>
+            <option value="category" id="opt-category">Practice Areas (A→Z)</option>
+          </select>
+        </div>
+
+        <!-- Description panel lives under the filters -->
+        <section id="detail" class="detail" aria-live="polite" aria-atomic="true">
+          <div class="empty" id="empty-msg">Select a partner from the list of names to find out more!</div>
+        </section>
+      </section>
+    </div>
+
+    <!-- Map sits BELOW both panels (full width) -->
+    <div id="map"></div>
+
+  </main>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 <script>
 (function(){
   const CSV_URL='https://docs.google.com/spreadsheets/d/e/2PACX-1vR1A8WkC-BbA94Ipm6Sit3qx5ndFoTG-zBBqnZPkNDEvHa11O0BJTRCWepWyo6RhqH58ZK1kQXO9v6P/pub?gid=1272818494&single=true&output=csv';
@@ -5,76 +332,114 @@
   const ATTRIB='&copy; OpenStreetMap &copy; CARTO';
   const MARKER_STYLE={radius:6,weight:1.5,color:'var(--hotpink-border)',fillColor:'var(--hotpink)',fillOpacity:0.9};
 
-  /* === Language state & dictionaries === */
-  let lang='en'; // 'en' or 'es'
+  const FIELD_ALIASES={
+    name:['_Name','Name'],
+    address:['_Address','Address'],
+    lat:['_Latitude','Latitude'],
+    lng:['_Longitude','Longitude'],
+    website:['_Website','Website'],
+    description:['_Description','Description'],
+    category:['_Category','Category','Main Practice areas','Main Practice Areas'],
+    primary:['_PrimaryCategory','PrimaryCategory'],
+    intake:['_Intake','Intake'],
+    geoElig:['_GeographicEligibility','Geographic Eligibility'],
+    finElig:['_FinancialEligibility','Financial Eligibility'],
+    logo:['_Logo','Logo'] // partner logo
+  };
 
-  const L10N = {
+  // i18n strings
+  const i18n = {
     en: {
-      searchLabel: 'Search',
-      searchPlaceholder: 'Search partners, services, or notes…',
-      practiceAreas: 'Practice Areas',
+      partners: 'Partners',
+      search: 'Search',
+      searchPH: 'Search partners, services, or notes…',
+      practice: 'Practice Areas',
       clearFilters: 'Clear filters',
       sortBy: 'Sort by',
-      partners: 'Partners',
-      about: 'About',
-      intake: 'Intake',
-      geo: 'Geographic Eligibility',
-      fin: 'Financial Eligibility',
+      optName: 'Name (A→Z)',
+      optPrimary: 'Main Practice Area (A→Z)',
+      optCategory: 'Practice Areas (A→Z)',
+      empty: 'Select a partner from the list of names to find out more!',
       address: 'Address',
-      website: 'Website',
-      empty: 'Select a partner from the list of names to find out more!'
+      website: 'website',
+      toggleTitle: 'Switch to Spanish'
     },
     es: {
-      searchLabel: 'Buscar',
-      searchPlaceholder: 'Buscar organizaciones, servicios o notas…',
-      practiceAreas: 'Áreas de práctica',
+      partners: 'Socios',
+      search: 'Buscar',
+      searchPH: 'Buscar organizaciones, servicios o notas…',
+      practice: 'Áreas de práctica',
       clearFilters: 'Borrar filtros',
       sortBy: 'Ordenar por',
-      partners: 'Aliados',
-      about: 'Acerca de',
-      intake: 'Admisión',
-      geo: 'Elegibilidad geográfica',
-      fin: 'Elegibilidad financiera',
+      optName: 'Nombre (A→Z)',
+      optPrimary: 'Área principal (A→Z)',
+      optCategory: 'Áreas de práctica (A→Z)',
+      empty: '¡Selecciona una organización de la lista para ver más información!',
       address: 'Dirección',
-      website: 'Sitio web',
-      empty: '¡Selecciona un aliado para ver más información!'
+      website: 'sitio web',
+      toggleTitle: 'Cambiar a inglés'
     }
   };
-  const t=(key)=> (L10N[lang] && L10N[lang][key]) || key;
+  let currentLang = 'en';
 
-  /* === Field aliases (English + Spanish fallbacks) === */
-  const FIELD_ALIASES={
-    // If you add *_es columns, they’ll be preferred when lang==='es'
-    name:        ['_Name','Name','_Name_es','Name_es'],
-    address:     ['_Address','Address','_Address_es','Address_es','Location','Street'],
-    lat:         ['_Latitude','Latitude','Lat'],
-    lng:         ['_Longitude','Longitude','Lng','Long'],
-    website:     ['_Website','Website','URL'],
-    description: ['_Description','Description','Notes','_Description_es','Description_es'],
-    category:    ['_Category','Category','Main Practice areas','Main Practice Areas','_Category_es','Category_es'],
-    primary:     ['_PrimaryCategory','PrimaryCategory','_PrimaryCategory_es','PrimaryCategory_es'],
-    intake:      ['_Intake','Intake','_Intake_es','Intake_es'],
-    geoElig:     ['_GeographicEligibility','Geographic Eligibility','_GeographicEligibility_es','Geographic_Eligibility_es'],
-    finElig:     ['_FinancialEligibility','Financial Eligibility','_FinancialEligibility_es','Financial_Eligibility_es'],
-    logo:        ['_Logo','Logo']
+  // Elements
+  const els = {
+    langBtn: document.getElementById('lang-toggle'),
+    lblPartners: document.getElementById('lbl-partners'),
+    lblSearch: document.getElementById('lbl-search'),
+    search: document.getElementById('search'),
+    lblPractice: document.getElementById('lbl-practice'),
+    clearCats: document.getElementById('clear-cats'),
+    lblSort: document.getElementById('lbl-sort'),
+    sort: document.getElementById('sort'),
+    optName: document.getElementById('opt-name'),
+    optPrimary: document.getElementById('opt-primary'),
+    optCategory: document.getElementById('opt-category'),
+    cats: document.getElementById('category-filters'),
+    list: document.getElementById('list'),
+    detail: document.getElementById('detail'),
+    emptyMsg: document.getElementById('empty-msg')
   };
 
-  const els={
-    search:document.getElementById('search'),
-    sort:document.getElementById('sort'),
-    cats:document.getElementById('category-filters'),
-    clearCats:document.getElementById('clear-cats'),
-    list:document.getElementById('list'),
-    detail:document.getElementById('detail'),
-    // labels/headings we’ll update on language switch:
-    filtersbar: document.querySelector('.filtersbar'),
-    lblSearch:  document.querySelector('.filtersbar .row label'),
-    lblPractice: document.querySelector('.filtersbar .row-inline label'),
-    btnClear:   document.getElementById('clear-cats'),
-    lblSort:    document.querySelectorAll('.filtersbar .row label')[2], // 3rd label
-    partnersHeader: document.querySelector('.legend-header span'),
-    langToggle: document.getElementById('lang-toggle')
-  };
+  function setLang(lang){
+    currentLang = lang;
+    const t = i18n[lang];
+    document.documentElement.setAttribute('lang', lang === 'es' ? 'es' : 'en');
+
+    els.lblPartners.textContent = t.partners;
+    els.lblSearch.textContent = t.search;
+    els.search.placeholder = t.searchPH;
+    els.lblPractice.textContent = t.practice;
+    els.clearCats.textContent = t.clearFilters;
+    els.lblSort.textContent = t.sortBy;
+    els.optName.textContent = t.optName;
+    els.optPrimary.textContent = t.optPrimary;
+    els.optCategory.textContent = t.optCategory;
+    const emptyEl = els.detail.querySelector('.empty');
+    if (emptyEl) emptyEl.textContent = t.empty;
+
+    // toggle button state
+    if (els.langBtn){
+      const pressed = (lang === 'es');
+      els.langBtn.setAttribute('aria-pressed', pressed ? 'true' : 'false');
+      els.langBtn.textContent = pressed ? 'EN' : 'ES';
+      els.langBtn.title = t.toggleTitle;
+    }
+  }
+
+  // Start in EN
+  setLang('en');
+
+  // Toggle handler
+  if (els.langBtn){
+    els.langBtn.addEventListener('click', ()=>{
+      setLang(currentLang === 'en' ? 'es' : 'en');
+      // re-render list/detail so empty msg/localized bits stay synced
+      renderList(filtered);
+      if (!activeId) renderDetail(null);
+      // re-open popup to update label text if any open? (skip: we update on open)
+    });
+  }
 
   let data=[],filtered=[],activeId=null,currentBounds=null;
   const practiceAreas=new Set();
@@ -96,29 +461,19 @@
       headerMap[String(h).trim().toLowerCase()]=h;
     });
   }
-
-  // pick with alias list; prefers *_es when lang==='es' but falls back safely
   function pick(row, keys){
-    // reorder keys to prefer *_es entries if lang is 'es'
-    const ordered = (lang==='es')
-      ? [...keys.filter(k=>String(k).toLowerCase().endsWith('_es')), ...keys.filter(k=>!String(k).toLowerCase().endsWith('_es'))]
-      : keys;
-
-    for(const k of ordered){
-      // direct key
+    for(const k of keys){
       if(row[k]!==undefined && String(row[k]).trim()!=='') return String(row[k]).trim();
-
-      // headerMap indirection
       const norm=String(k||'').trim().toLowerCase();
       const real=headerMap[norm];
       if(real && row[real]!==undefined && String(row[real]).trim()!=='') return String(row[real]).trim();
     }
     return '';
   }
-
   const splitCats = s => (s||'').split(/[,;]/).map(v=>v.trim()).filter(Boolean);
 
   function popupHTML(r){
+    const t = i18n[currentLang];
     const name=pick(r,FIELD_ALIASES.name)||'Untitled';
     const addr=pick(r,FIELD_ALIASES.address);
     const site=pick(r,FIELD_ALIASES.website);
@@ -126,9 +481,9 @@
     const addrHtml=addr?`<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addr)}" target="_blank" rel="noopener">${addr}</a>`:'';
     return `<div style="font-family:'Raleway';font-size:13px">
       <div style="font-weight:600">${name}</div>
-      ${addrHtml?`<div>${addrHtml}</div>`:''}
+      ${addrHtml?`<div><b>${t.address}:</b> ${addrHtml}</div>`:''}
       ${cats.length?`<div style="color:#6b7280;font-size:12px">${cats.join(', ')}</div>`:''}
-      ${site?`<a href="${site}" target="_blank" rel="noopener">${t('website').toLowerCase()}</a>`:''}
+      ${site?`<a href="${site}" target="_blank" rel="noopener">${t.website}</a>`:''}
     </div>`;
   }
 
@@ -142,32 +497,10 @@
     return b.isValid()? b : L.latLngBounds([[41.85,-87.75],[42.05,-87.55]]);
   }
 
-  // Render category chips from the localized categories
-  function renderCategories(){
-    els.cats.innerHTML='';
-    // rebuild practiceAreas each time in case language changed
-    const set=new Set();
-    data.forEach(r=>{
-      splitCats(pick(r,FIELD_ALIASES.category)).forEach(c=>c && set.add(c));
-    });
-    // show in UI
-    Array.from(set).sort((a,b)=>a.localeCompare(b)).forEach(cat=>{
-      const span=document.createElement('span');
-      span.className='chip';
-      span.textContent=cat; span.dataset.value=cat;
-      span.onclick=()=>{span.classList.toggle('active');applyFilters();};
-      els.cats.appendChild(span);
-    });
-  }
-
-  function clearCategoryFilters(){
-    els.cats.querySelectorAll('.chip.active').forEach(ch=>ch.classList.remove('active'));
-    applyFilters();
-  }
-
-  // Logo markers (fallback to circle)
+  // Logo markers (fallback to hot pink circle)
   function renderMarkers(rows){
-    layerGroup.clearLayers();markers.length=0;
+    layerGroup.clearLayers(); markers.length=0;
+
     rows.forEach(r=>{
       const lat=parseFloat(pick(r,FIELD_ALIASES.lat));
       const lng=parseFloat(pick(r,FIELD_ALIASES.lng));
@@ -176,15 +509,21 @@
       const logo=pick(r,FIELD_ALIASES.logo);
       let m;
       if(logo){
-        const icon=L.icon({iconUrl:logo,iconSize:[40,40],iconAnchor:[20,40],popupAnchor:[0,-38],className:'partner-logo-icon'});
+        const icon=L.icon({
+          iconUrl:logo,
+          iconSize:[40,40],
+          iconAnchor:[20,40],     // bottom center
+          popupAnchor:[0,-38],
+          className:'partner-logo-icon'
+        });
         m=L.marker([lat,lng],{icon});
       } else {
         m=L.circleMarker([lat,lng],MARKER_STYLE);
       }
 
       m.__id=r.__id;
-      m.bindPopup(popupHTML(r),{maxWidth:300,autoPan:true,autoPanPadding:[30,30]});
-      m.on('click',()=>{selectById(r.__id,true);map.once('moveend',()=>m.openPopup());m.openPopup();});
+      m.bindPopup(()=>popupHTML(r),{maxWidth:300,autoPan:true,autoPanPadding:[30,30]});
+      m.on('click',()=>{selectById(r.__id,true);});
       m.on('popupclose',()=>{
         if(activeId===m.__id){
           activeId=null;
@@ -193,8 +532,11 @@
         }
         if(currentBounds) map.fitBounds(currentBounds,{padding:[20,20]});
       });
-      markers.push(m);layerGroup.addLayer(m);
+
+      markers.push(m);
+      layerGroup.addLayer(m);
     });
+
     currentBounds=boundsFromRows(rows);
     map.fitBounds(currentBounds,{padding:[20,20]});
   }
@@ -204,7 +546,7 @@
       const id=r.__id;const name=pick(r,FIELD_ALIASES.name)||'Untitled';
       return `<div class="item${activeId===id?' active':''}" data-id="${id}" role="option" tabindex="0">
         <h4>${name}</h4>
-        <div class="meta" style="display:none"></div>
+        <div class="meta"></div>
       </div>`;
     }).join('');
     els.list.querySelectorAll('.item').forEach(el=>{
@@ -212,14 +554,24 @@
         const id=Number(el.dataset.id);
         selectById(id,true);
         const m=markers.find(mm=>mm.__id===id);
-        if(m){map.once('moveend',()=>m.openPopup());m.openPopup();}
+        if(m){ map.once('moveend',()=>m.openPopup()); m.openPopup(); }
+      });
+      el.addEventListener('keydown',e=>{
+        if(e.key==='Enter'||e.key===' '){
+          e.preventDefault();
+          const id=Number(el.dataset.id);
+          selectById(id,true);
+          const m=markers.find(mm=>mm.__id===id);
+          if(m){ map.once('moveend',()=>m.openPopup()); m.openPopup(); }
+        }
       });
     });
   }
 
   function renderDetail(r){
+    const t = i18n[currentLang];
     if(!r){
-      els.detail.innerHTML=`<div class="empty">${t('empty')}</div>`;
+      els.detail.innerHTML=`<div class="empty">${t.empty}</div>`;
       return;
     }
     const name=pick(r,FIELD_ALIASES.name)||'Untitled';
@@ -242,19 +594,19 @@
         <button class="detail-close" id="detail-close" aria-label="Close">×</button>
       </div>
       ${cats.length?`<div>${cats.map(c=>`<span class="pill">${c}</span>`).join('')}</div>`:''}
-      ${addrHtml?`<div class="kv"><b>${t('address')}:</b> ${addrHtml}</div>`:''}
-      ${site?`<div class="kv"><b>${t('website')}:</b> <a href="${site}" target="_blank" rel="noopener">${site}</a></div>`:''}
-      ${desc?`<div class="section-title">${t('about')}</div><div>${desc}</div>`:''}
-      ${intake?`<div class="section-title">${t('intake')}</div><div>${intake}</div>`:''}
-      ${geo?`<div class="section-title">${t('geo')}</div><div>${geo}</div>`:''}
-      ${fin?`<div class="section-title">${t('fin')}</div><div>${fin}</div>`:''}
+      ${addrHtml?`<div class="kv"><b>${t.address}:</b> ${addrHtml}</div>`:''}
+      ${site?`<div class="kv"><b>Website:</b> <a href="${site}" target="_blank" rel="noopener">${site}</a></div>`:''}
+      ${desc?`<div class="section-title">About</div><div>${desc}</div>`:''}
+      ${intake?`<div class="section-title">Intake</div><div>${intake}</div>`:''}
+      ${geo?`<div class="section-title">Geographic Eligibility</div><div>${geo}</div>`:''}
+      ${fin?`<div class="section-title">Financial Eligibility</div><div>${fin}</div>`:''}
     `;
 
     const closeBtn=document.getElementById('detail-close');
     if(closeBtn){
       closeBtn.addEventListener('click',()=>{
         activeId=null;
-        els.detail.innerHTML=`<div class="empty">${t('empty')}</div>`;
+        els.detail.innerHTML=`<div class="empty">${t.empty}</div>`;
         markers.forEach(m=>m.closePopup());
         if(currentBounds) map.fitBounds(currentBounds,{padding:[20,20]});
         document.querySelectorAll('.legend-list .item').forEach(el=>el.classList.remove('active'));
@@ -285,8 +637,6 @@
     filtered=data.filter(r=>{
       const cats=splitCats(pick(r,FIELD_ALIASES.category));
       const inCat=activeCats.length?cats.some(c=>activeCats.includes(c)):true;
-
-      // Search checks both main and localized fields that appear in UI
       const hay=[
         pick(r,FIELD_ALIASES.name),
         pick(r,FIELD_ALIASES.address),
@@ -296,15 +646,14 @@
         pick(r,FIELD_ALIASES.geoElig),
         pick(r,FIELD_ALIASES.finElig)
       ].filter(Boolean).join(' ').toLowerCase();
-
       const inSearch=q?hay.includes(q):true;
       return inCat && inSearch;
     });
 
     filtered.sort((a,b)=>{
       if(sortBy==='primary'){
-        const pa=pick(a,FIELD_ALIASES.primary)||(splitCats(pick(a,FIELD_ALIASES.category))[0]||'');
-        const pb=pick(b,FIELD_ALIASES.primary)||(splitCats(pick(b,FIELD_ALIASES.category))[0]||'');
+        const pa=splitCats(pick(a,FIELD_ALIASES.category))[0]||'';
+        const pb=splitCats(pick(b,FIELD_ALIASES.category))[0]||'';
         return pa.localeCompare(pb);
       }
       if(sortBy==='category'){
@@ -323,24 +672,6 @@
     }
   }
 
-  // Update static UI strings on language switch
-  function updateStaticUIStrings(){
-    if(els.lblSearch)   els.lblSearch.textContent = t('searchLabel');
-    if(els.search)      els.search.placeholder    = t('searchPlaceholder');
-    if(els.lblPractice) els.lblPractice.textContent = t('practiceAreas');
-    if(els.btnClear)    els.btnClear.textContent  = t('clearFilters');
-    if(els.lblSort)     els.lblSort.textContent   = t('sortBy');
-    if(els.partnersHeader) els.partnersHeader.textContent = t('partners');
-
-    // Toggle button state and title
-    if(els.langToggle){
-      const pressed = (lang==='es');
-      els.langToggle.setAttribute('aria-pressed', pressed ? 'true' : 'false');
-      els.langToggle.textContent = pressed ? 'EN' : 'ES';
-      els.langToggle.title = pressed ? 'Switch to English' : 'Cambiar a español';
-    }
-  }
-
   // Load CSV and initialize
   Papa.parse(CSV_URL,{
     download:true,header:true,skipEmptyLines:true,
@@ -348,34 +679,31 @@
       const fields = (res.meta && res.meta.fields) || [];
       buildHeaderMap(fields);
 
-      data=res.data.map((r,idx)=>Object.assign({},r,{__id:idx+1}));
+      data=res.data.map((r,idx)=>{
+        const cats=splitCats(pick(r,FIELD_ALIASES.category));
+        cats.forEach(c=>practiceAreas.add(c));
+        return Object.assign({},r,{__id:idx+1});
+      });
 
-      // First render
-      renderCategories();
-      updateStaticUIStrings();
+      // Render category chips from data
+      els.cats.innerHTML='';
+      Array.from(practiceAreas).sort((a,b)=>a.localeCompare(b)).forEach(cat=>{
+        const span=document.createElement('span');
+        span.className='chip';
+        span.textContent=cat; span.dataset.value=cat;
+        span.onclick=()=>{span.classList.toggle('active');applyFilters();};
+        els.cats.appendChild(span);
+      });
+
       applyFilters();
 
       // listeners
       els.search.addEventListener('input',applyFilters);
       els.sort.addEventListener('change',applyFilters);
-      els.clearCats.addEventListener('click',clearCategoryFilters);
-
-      // language toggle
-      if(els.langToggle){
-        els.langToggle.addEventListener('click',()=>{
-          lang = (lang==='en' ? 'es' : 'en');
-          updateStaticUIStrings();
-          renderCategories(); // recalc chips in new language
-          applyFilters();     // rebuild list/map in new language
-          // if a partner was open, reselect to refresh description in new lang
-          if(activeId){
-            const row=filtered.find(r=>r.__id===activeId);
-            if(row) renderDetail(row); else renderDetail(null);
-          } else {
-            renderDetail(null);
-          }
-        });
-      }
+      els.clearCats.addEventListener('click',()=>{
+        els.cats.querySelectorAll('.chip.active').forEach(ch=>ch.classList.remove('active'));
+        applyFilters();
+      });
     },
     error:err=>{
       console.error('CSV load error',err);
@@ -384,3 +712,5 @@
   });
 })();
 </script>
+</body>
+</html>
