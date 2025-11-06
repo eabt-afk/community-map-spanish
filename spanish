@@ -348,39 +348,48 @@ body{
   };
 
   // i18n strings
-  const i18n = {
-    en: {
-      partners: 'Partners',
-      search: 'Search',
-      searchPH: 'Search partners, services, or notes…',
-      practice: 'Practice Areas',
-      clearFilters: 'Clear filters',
-      sortBy: 'Sort by',
-      optName: 'Name (A→Z)',
-      optPrimary: 'Main Practice Area (A→Z)',
-      optCategory: 'Practice Areas (A→Z)',
-      empty: 'Select a partner from the list of names to find out more!',
-      address: 'Address',
-      website: 'website',
-      toggleTitle: 'Switch to Spanish'
-    },
-    es: {
-      partners: 'Socios',
-      search: 'Buscar',
-      searchPH: 'Buscar organizaciones, servicios o notas…',
-      practice: 'Áreas de práctica',
-      clearFilters: 'Borrar filtros',
-      sortBy: 'Ordenar por',
-      optName: 'Nombre (A→Z)',
-      optPrimary: 'Área principal (A→Z)',
-      optCategory: 'Áreas de práctica (A→Z)',
-      empty: '¡Selecciona una organización de la lista para ver más información!',
-      address: 'Dirección',
-      website: 'sitio web',
-      toggleTitle: 'Cambiar a inglés'
-    }
-  };
-  let currentLang = 'en';
+const i18n = {
+  en: {
+    partners: 'Partners',
+    search: 'Search',
+    searchPH: 'Search partners, services, or notes…',
+    practice: 'Practice Areas',
+    clearFilters: 'Clear filters',
+    sortBy: 'Sort by',
+    optName: 'Name (A→Z)',
+    optPrimary: 'Main Practice Area (A→Z)',
+    optCategory: 'Practice Areas (A→Z)',
+    empty: 'Select a partner from the list of names to find out more!',
+    address: 'Address',
+    website: 'website',
+    websiteLabel: 'Website',
+    about: 'About',
+    intake: 'Intake',
+    geo: 'Geographic Eligibility',
+    fin: 'Financial Eligibility',
+    toggleTitle: 'Switch to Spanish'
+  },
+  es: {
+    partners: 'Socios',
+    search: 'Buscar',
+    searchPH: 'Buscar organizaciones, servicios o notas…',
+    practice: 'Áreas de práctica',
+    clearFilters: 'Borrar filtros',
+    sortBy: 'Ordenar por',
+    optName: 'Nombre (A→Z)',
+    optPrimary: 'Área principal (A→Z)',
+    optCategory: 'Áreas de práctica (A→Z)',
+    empty: '¡Selecciona una organización de la lista para ver más información!',
+    address: 'Dirección',
+    website: 'sitio web',
+    websiteLabel: 'Sitio web',
+    about: 'Acerca de',
+    intake: 'Admisión',
+    geo: 'Elegibilidad geográfica',
+    fin: 'Elegibilidad financiera',
+    toggleTitle: 'Cambiar a inglés'
+  }
+};
 
   // Elements
   const els = {
@@ -585,22 +594,22 @@ body{
     const fin=pick(r,FIELD_ALIASES.finElig);
     const addrHtml=addr?`<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addr)}" target="_blank" rel="noopener">${addr}</a>`:'';
 
-    els.detail.innerHTML=`
-      <div class="detail-header">
-        <div class="titlewrap">
-          ${logo ? `<img class="detail-logo" src="${logo}" alt="${name} logo" loading="lazy">` : ``}
-          <h2>${name}</h2>
-        </div>
-        <button class="detail-close" id="detail-close" aria-label="Close">×</button>
-      </div>
-      ${cats.length?`<div>${cats.map(c=>`<span class="pill">${c}</span>`).join('')}</div>`:''}
-      ${addrHtml?`<div class="kv"><b>${t.address}:</b> ${addrHtml}</div>`:''}
-      ${site?`<div class="kv"><b>Website:</b> <a href="${site}" target="_blank" rel="noopener">${site}</a></div>`:''}
-      ${desc?`<div class="section-title">About</div><div>${desc}</div>`:''}
-      ${intake?`<div class="section-title">Intake</div><div>${intake}</div>`:''}
-      ${geo?`<div class="section-title">Geographic Eligibility</div><div>${geo}</div>`:''}
-      ${fin?`<div class="section-title">Financial Eligibility</div><div>${fin}</div>`:''}
-    `;
+   els.detail.innerHTML=`
+  <div class="detail-header">
+    <div class="titlewrap">
+      ${logo ? `<img class="detail-logo" src="${logo}" alt="${name} logo" loading="lazy">` : ``}
+      <h2>${name}</h2>
+    </div>
+    <button class="detail-close" id="detail-close" aria-label="Close">×</button>
+  </div>
+  ${cats.length?`<div>${cats.map(c=>`<span class="pill">${c}</span>`).join('')}</div>`:''}
+  ${addrHtml?`<div class="kv"><b>${t.address}:</b> ${addrHtml}</div>`:''}
+  ${site?`<div class="kv"><b>${t.websiteLabel}:</b> <a href="${site}" target="_blank" rel="noopener">${site}</a></div>`:''}
+  ${desc?`<div class="section-title">${t.about}</div><div>${desc}</div>`:''}
+  ${intake?`<div class="section-title">${t.intake}</div><div>${intake}</div>`:''}
+  ${geo?`<div class="section-title">${t.geo}</div><div>${geo}</div>`:''}
+  ${fin?`<div class="section-title">${t.fin}</div><div>${fin}</div>`:''}
+`;
 
     const closeBtn=document.getElementById('detail-close');
     if(closeBtn){
