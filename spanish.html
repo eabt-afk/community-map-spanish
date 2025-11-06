@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>Community Law Office Partners Map</title>
 
-<!-- Raleway font -->
+<!-- Raleway font + Leaflet -->
 <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="anonymous"/>
 
@@ -15,9 +15,7 @@
   --hotpink-border: hsla(323, 98%, 35%, 1);
 }
 
-/* Fill iframe height */
 html, body { height: 100%; }
-
 body{
   margin:0;
   font-family:"Raleway",system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
@@ -27,7 +25,7 @@ body{
   box-sizing:border-box;
 }
 
-/* Page layout */
+/* Layout */
 .layout {
   display:grid;
   grid-template-columns: 1fr;
@@ -37,35 +35,29 @@ body{
   gap:16px;
   box-sizing:border-box;
 }
-
-/* Stage stacks: top-panels then map below (full width) */
 .stage {
   display:grid;
-  grid-template-rows: auto auto;  /* top panels auto, map fixed below */
+  grid-template-rows: auto auto;
   gap:32px;
   height:100%;
   min-height:0;
 }
-#map { margin-top: 20px; } /* extra spacing below the top panels */
+#map { margin-top: 20px; }
 
-/* Top row with two panels (Partners left, Filters/Detail right) */
+/* Panels */
 .top-panels {
   display:grid;
-  grid-template-columns: 260px 1fr; /* Partners fixed at 260px, Filters/Detail take the rest */
+  grid-template-columns: 260px 1fr;
   gap:16px;
   align-items:stretch;
 }
-/* Panels fill the grid track height */
 .legend, .controls { height: 100%; }
 
-/* Let the right panel stack filters + description vertically */
 .controls {
   display: flex;
   flex-direction: column;
-  position: relative; /* for language toggle positioning */
+  position: relative;
 }
-
-/* Language toggle pill */
 .lang-toggle{
   position:absolute; top:12px; right:12px;
   border:1px solid var(--hotpink);
@@ -78,23 +70,14 @@ body{
   background:var(--hotpink); color:#fff; border-color:var(--hotpink);
 }
 
-/* Let the description area expand to fill remaining height in the right panel */
 .detail { margin-top: 12px; flex-grow: 1; }
-
-/* Ensure no inner scrolling in the partners list */
 .legend, .legend-list { overflow: visible; }
 
-/* Panels style */
 .controls, .legend {
-  background:#fff;
-  border:1px solid #e5e7eb;
-  border-radius:14px;
-  color:#111;
-  padding:14px;
-  box-shadow:0 2px 8px rgba(0,0,0,.08);
+  background:#fff; border:1px solid #e5e7eb;
+  border-radius:14px; color:#111;
+  padding:14px; box-shadow:0 2px 8px rgba(0,0,0,.08);
 }
-
-/* Headers hot pink */
 .controls label,
 .legend-header {
   color: var(--hotpink);
@@ -102,202 +85,112 @@ body{
   font-size: 18px;
   line-height: 1.2;
 }
-
-/* Filters spacing */
 .controls .row { margin-bottom: 16px; }
-.controls .row:last-child { margin-bottom: 0; }
 .row-inline{display:flex;align-items:center;justify-content:space-between;gap:8px}
-
-/* Search input */
 #search {
-  width:100%;
-  padding:10px;
-  border:1px solid #d1d5db;
-  border-radius:10px;
-  background:#fff;
-  color:#111;
+  width:100%; padding:10px;
+  border:1px solid #d1d5db; border-radius:10px;
+  background:#fff; color:#111;
   font-family:"Raleway",sans-serif;
 }
-
-/* Practice area chips */
 .chips{display:flex;flex-wrap:wrap;gap:8px}
 .chip {
-  border: 1px solid var(--hotpink-border);
-  background: var(--hotpink);
-  color: #111;               /* black text per your earlier request */
-  border-radius: 999px;
-  padding: 6px 10px;
-  cursor: pointer;
-  font-size: 13px;
-  font-family: "Raleway", sans-serif;
+  border:1px solid var(--hotpink-border);
+  background:var(--hotpink);
+  color:#111;
+  border-radius:999px;
+  padding:6px 10px;
+  cursor:pointer;
+  font-size:13px;
+  font-family:"Raleway",sans-serif;
 }
 .chip.active {
-  background: #fff;
-  border-color: var(--hotpink);
-  color: var(--hotpink);
-  font-weight: 600;
+  background:#fff;
+  border-color:var(--hotpink);
+  color:var(--hotpink);
+  font-weight:600;
 }
-#category-filters { margin-bottom: 16px; }
-
-/* Clear button */
 .btn-clear {
-  border: 1px solid var(--hotpink);
-  background: #fff;
-  color: var(--hotpink);
-  border-radius: 999px;
-  padding: 6px 10px;
-  font-size: 12px;
-  cursor: pointer;
-  font-family: "Raleway", sans-serif;
+  border:1px solid var(--hotpink);
+  background:#fff;
+  color:var(--hotpink);
+  border-radius:999px;
+  padding:6px 10px;
+  font-size:12px;
+  cursor:pointer;
+  font-family:"Raleway",sans-serif;
 }
 .btn-clear:hover { background:#f3f4f6; }
 
-/* Legend (Partners) */
-.legend {
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 14px;
-  overflow: visible;
-  color: #111;
-}
-.legend-header {
-  padding:10px 12px;
-  border-bottom:1px solid var(--hotpink);
-}
+/* Legend */
+.legend-header { padding:10px 12px; border-bottom:1px solid var(--hotpink); }
 .legend-list .item {
-  padding:10px 12px;
-  border-bottom:1px solid #e5e7eb;
-  cursor:pointer;
+  padding:10px 12px; border-bottom:1px solid #e5e7eb; cursor:pointer;
 }
 .legend-list .item:last-child{border-bottom:none}
-.legend-list h4 {
-  margin:0;
-  font-size:14px;
-  line-height:1.25;
-  color:#111;
-  font-family:"Raleway",sans-serif;
-}
-.legend-list .item.active h4 { color:var(--hotpink); font-weight:700; }
-.legend-list .meta { font-size:12px; color:#555; font-family:"Raleway",sans-serif; }
-/* Hide the meta line under partner names (removes main practice area under name) */
-.legend-list .meta { display: none !important; }
+.legend-list h4{margin:0;font-size:14px;color:#111;}
+.legend-list .item.active h4{color:var(--hotpink);font-weight:700;}
+.legend-list .meta{display:none!important;}
 
-/* Detail card (inside controls, under filters) */
+/* Detail */
 .detail{
-  background:#fff;
-  border:1px solid #e5e7eb;
-  border-radius:14px;
-  padding:14px;
-  position:relative;
-  font-family:"Raleway",sans-serif;
+  background:#fff; border:1px solid #e5e7eb;
+  border-radius:14px; padding:14px;
   color:#111;
-  margin-top:12px;
 }
-.detail h2{margin:0 0 6px 0;font-size:17px;color:#111}
-.detail .kv{font-size:13px}
-.kv b{font-weight:700}
-.kv a{text-decoration:underline}
-.section-title{margin-top:10px;font-weight:700;font-size:13px}
-
-/* logo inside description */
-.detail-header .titlewrap{
-  display:flex;
-  align-items:center;
-  gap:10px;
-  min-width:0;
-}
+.detail-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;}
 .detail-logo{
-  width:40px;
-  height:40px;
-  border-radius:8px;
-  border:1px solid #e5e7eb;
-  background:#fff;
-  object-fit:contain;
-  flex:0 0 auto;
+  width:40px; height:40px; border-radius:8px;
+  border:1px solid #e5e7eb; background:#fff;
+  object-fit:contain; flex:0 0 auto;
 }
-.detail h2{
-  margin:0;
-  font-size:17px;
-  color:#111;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-}
-
-/* Category pills (pink bg + black text per your preference for tags) */
 .pill{
   display:inline-block;
-  background: var(--hotpink);
+  background:var(--hotpink);
   color:#111;
   border-radius:999px;
   padding:2px 8px;
   font-size:11px;
   margin:2px 4px 0 0;
 }
-.detail-header{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px}
-.detail-close{border:none;background:#f3f4f6;border-radius:10px;font-size:18px;line-height:1;padding:4px 10px;cursor:pointer}
-.detail-close:hover{background:#e5e7eb}
-.detail .empty{color:var(--hotpink);font-weight:600}
+.detail-close{border:none;background:#f3f4f6;border-radius:10px;font-size:18px;padding:4px 10px;cursor:pointer;}
+.detail-close:hover{background:#e5e7eb;}
+.detail .empty{color:var(--hotpink);font-weight:600;}
 
-/* Map placed BELOW the top panels (full width) */
 #map{
   border:1px solid #e5e7eb;
   border-radius:14px;
   background:#fff;
   width:100%;
-  height:650px;   /* adjust as you like */
+  height:650px;
   min-height:380px;
 }
-
-/* Grayscale tiles */
-#map .leaflet-tile { filter: grayscale(100%) saturate(0) contrast(1.05); }
-
-/* Logo markers on the map */
-.leaflet-marker-icon.partner-logo-icon {
-  width:40px;
-  height:40px;
-  border-radius:50%;
-  border:2px solid #fff;
-  background:#fff;
-  box-shadow:0 0 6px rgba(0,0,0,.25);
-  object-fit:cover;
+#map .leaflet-tile{filter:grayscale(100%) saturate(0) contrast(1.05);}
+.leaflet-marker-icon.partner-logo-icon{
+  width:40px;height:40px;border-radius:50%;
+  border:2px solid #fff;background:#fff;
+  box-shadow:0 0 6px rgba(0,0,0,.25);object-fit:cover;
 }
-
-/* Leaflet popup styling */
-.leaflet-container .leaflet-popup-content{font-family:"Raleway",system-ui,sans-serif;font-size:13px}
-.leaflet-container .leaflet-popup-content-wrapper{border-radius:10px}
-.leaflet-container .leaflet-popup-tip{opacity:.95}
-
-/* Responsive stacking */
-@media (max-width:1000px){
-  .top-panels { grid-template-columns: 1fr; }
-}
+@media(max-width:1000px){.top-panels{grid-template-columns:1fr;}}
 </style>
 </head>
 <body>
 <div class="layout">
   <main class="stage">
-
-    <!-- Top: Partners (left) + Filters (with Description) right -->
     <div class="top-panels">
-
-      <!-- Partners panel -->
       <aside class="legend">
         <div class="legend-header"><span id="lbl-partners">Partners</span></div>
-        <div id="list" class="legend-list" role="listbox" aria-label="Partner list"></div>
+        <div id="list" class="legend-list"></div>
       </aside>
 
-      <!-- Filters + Detail panel -->
       <section class="controls">
-        <!-- Language toggle -->
-        <button id="lang-toggle" class="lang-toggle" type="button" aria-pressed="false" title="Cambiar a español">ES</button>
-
+        <button id="lang-toggle" class="lang-toggle" aria-pressed="false" title="Switch to Spanish">ES</button>
         <div class="row">
           <label id="lbl-search">Search</label>
           <input id="search" type="text" placeholder="Search partners, services, or notes…"/>
         </div>
         <div class="row row-inline">
-          <label id="lbl-practice" style="margin:0">Practice Areas</label>
+          <label id="lbl-practice">Practice Areas</label>
           <button id="clear-cats" class="btn-clear" type="button">Clear filters</button>
         </div>
         <div id="category-filters" class="chips"></div>
@@ -309,17 +202,10 @@ body{
             <option value="category" id="opt-category">Practice Areas (A→Z)</option>
           </select>
         </div>
-
-        <!-- Description panel lives under the filters -->
-        <section id="detail" class="detail" aria-live="polite" aria-atomic="true">
-          <div class="empty" id="empty-msg">Select a partner from the list of names to find out more!</div>
-        </section>
+        <section id="detail" class="detail"><div class="empty" id="empty-msg">Select a partner from the list of names to find out more!</div></section>
       </section>
     </div>
-
-    <!-- Map sits BELOW both panels (full width) -->
     <div id="map"></div>
-
   </main>
 </div>
 
@@ -327,398 +213,365 @@ body{
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 <script>
 (function(){
-  const CSV_URL='https://docs.google.com/spreadsheets/d/e/2PACX-1vR1A8WkC-BbA94Ipm6Sit3qx5ndFoTG-zBBqnZPkNDEvHa11O0BJTRCWepWyo6RhqH58ZK1kQXO9v6P/pub?gid=1272818494&single=true&output=csv';
-  const TILE_URL='https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png';
-  const ATTRIB='&copy; OpenStreetMap &copy; CARTO';
-  const MARKER_STYLE={radius:6,weight:1.5,color:'var(--hotpink-border)',fillColor:'var(--hotpink)',fillOpacity:0.9};
+const CSV_URL='https://docs.google.com/spreadsheets/d/e/2PACX-1vR1A8WkC-BbA94Ipm6Sit3qx5ndFoTG-zBBqnZPkNDEvHa11O0BJTRCWepWyo6RhqH58ZK1kQXO9v6P/pub?gid=1272818494&single=true&output=csv';
+const TILE_URL='https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png';
+const ATTRIB='&copy; OpenStreetMap &copy; CARTO';
+const MARKER_STYLE={radius:6,weight:1.5,color:'var(--hotpink-border)',fillColor:'var(--hotpink)',fillOpacity:0.9};
 
-  const FIELD_ALIASES={
-    name:['_Name','Name'],
-    address:['_Address','Address'],
-    lat:['_Latitude','Latitude'],
-    lng:['_Longitude','Longitude'],
-    website:['_Website','Website'],
-    description:['_Description','Description'],
-    category:['_Category','Category','Main Practice areas','Main Practice Areas'],
-    primary:['_PrimaryCategory','PrimaryCategory'],
-    intake:['_Intake','Intake'],
-    geoElig:['_GeographicEligibility','Geographic Eligibility'],
-    finElig:['_FinancialEligibility','Financial Eligibility'],
-    logo:['_Logo','Logo'] // partner logo
-  };
-
-  // i18n strings
-const i18n = {
-  en: {
-    partners: 'Partners',
-    search: 'Search',
-    searchPH: 'Search partners, services, or notes…',
-    practice: 'Practice Areas',
-    clearFilters: 'Clear filters',
-    sortBy: 'Sort by',
-    optName: 'Name (A→Z)',
-    optPrimary: 'Main Practice Area (A→Z)',
-    optCategory: 'Practice Areas (A→Z)',
-    empty: 'Select a partner from the list of names to find out more!',
-    address: 'Address',
-    website: 'website',
-    websiteLabel: 'Website',
-    about: 'About',
-    intake: 'Intake',
-    geo: 'Geographic Eligibility',
-    fin: 'Financial Eligibility',
-    toggleTitle: 'Switch to Spanish'
-  },
-  es: {
-    partners: 'Socios',
-    search: 'Buscar',
-    searchPH: 'Buscar organizaciones, servicios o notas…',
-    practice: 'Áreas de práctica',
-    clearFilters: 'Borrar filtros',
-    sortBy: 'Ordenar por',
-    optName: 'Nombre (A→Z)',
-    optPrimary: 'Área principal (A→Z)',
-    optCategory: 'Áreas de práctica (A→Z)',
-    empty: '¡Selecciona una organización de la lista para ver más información!',
-    address: 'Dirección',
-    website: 'sitio web',
-    websiteLabel: 'Sitio web',
-    about: 'Acerca de',
-    intake: 'Admisión',
-    geo: 'Elegibilidad geográfica',
-    fin: 'Elegibilidad financiera',
-    toggleTitle: 'Cambiar a inglés'
-  }
+const FIELD_ALIASES={
+  name:['_Name','Name'],
+  address:['_Address','Address'],
+  lat:['_Latitude','Latitude'],
+  lng:['_Longitude','Longitude'],
+  website:['_Website','Website'],
+  description:['_Description','Description'],
+  category:['_Category','Category','Main Practice areas','Main Practice Areas'],
+  primary:['_PrimaryCategory','PrimaryCategory'],
+  intake:['_Intake','Intake'],
+  geoElig:['_GeographicEligibility','Geographic Eligibility'],
+  finElig:['_FinancialEligibility','Financial Eligibility'],
+  logo:['_Logo','Logo']
+};
+const FIELD_ALIASES_ES={
+  name:['_Name_es','Name_es'],
+  address:['_Address_es','Address_es'],
+  description:['_Description_es','Description_es'],
+  category:['_Category_es','Category_es'],
+  intake:['_Intake_es','Intake_es'],
+  geoElig:['_GeographicEligibility_es','GeographicEligibility_es','Geographic Eligibility_es'],
+  finElig:['_FinancialEligibility_es','FinancialEligibility_es','Financial Eligibility_es']
 };
 
-  // Elements
-  const els = {
-    langBtn: document.getElementById('lang-toggle'),
-    lblPartners: document.getElementById('lbl-partners'),
-    lblSearch: document.getElementById('lbl-search'),
-    search: document.getElementById('search'),
-    lblPractice: document.getElementById('lbl-practice'),
-    clearCats: document.getElementById('clear-cats'),
-    lblSort: document.getElementById('lbl-sort'),
-    sort: document.getElementById('sort'),
-    optName: document.getElementById('opt-name'),
-    optPrimary: document.getElementById('opt-primary'),
-    optCategory: document.getElementById('opt-category'),
-    cats: document.getElementById('category-filters'),
-    list: document.getElementById('list'),
-    detail: document.getElementById('detail'),
-    emptyMsg: document.getElementById('empty-msg')
-  };
+const i18n={
+  en:{partners:'Partners',search:'Search',searchPH:'Search partners, services, or notes…',
+      practice:'Practice Areas',clearFilters:'Clear filters',sortBy:'Sort by',
+      optName:'Name (A→Z)',optPrimary:'Main Practice Area (A→Z)',optCategory:'Practice Areas (A→Z)',
+      empty:'Select a partner from the list of names to find out more!',
+      address:'Address',website:'website',websiteLabel:'Website',about:'About',
+      intake:'Intake',geo:'Geographic Eligibility',fin:'Financial Eligibility',toggleTitle:'Switch to Spanish'},
+  es:{partners:'Socios',search:'Buscar',searchPH:'Buscar organizaciones, servicios o notas…',
+      practice:'Áreas de práctica',clearFilters:'Borrar filtros',sortBy:'Ordenar por',
+      optName:'Nombre (A→Z)',optPrimary:'Área principal (A→Z)',optCategory:'Áreas de práctica (A→Z)',
+      empty:'¡Selecciona una organización de la lista para ver más información!',
+      address:'Dirección',website:'sitio web',websiteLabel:'Sitio web',about:'Acerca de',
+      intake:'Admisión',geo:'Elegibilidad geográfica',fin:'Elegibilidad financiera',toggleTitle:'Cambiar a inglés'}
+};
 
-  function setLang(lang){
-    currentLang = lang;
-    const t = i18n[lang];
-    document.documentElement.setAttribute('lang', lang === 'es' ? 'es' : 'en');
+const els={
+  langBtn:document.getElementById('lang-toggle'),
+  lblPartners:document.getElementById('lbl-partners'),
+  lblSearch:document.getElementById('lbl-search'),
+  search:document.getElementById('search'),
+  lblPractice:document.getElementById('lbl-practice'),
+  clearCats:document.getElementById('clear-cats'),
+  lblSort:document.getElementById('lbl-sort'),
+  sort:document.getElementById('sort'),
+  optName:document.getElementById('opt-name'),
+  optPrimary:document.getElementById('opt-primary'),
+  optCategory:document.getElementById('opt-category'),
+  cats:document.getElementById('category-filters'),
+  list:document.getElementById('list'),
+  detail:document.getElementById('detail')
+};
 
-    els.lblPartners.textContent = t.partners;
-    els.lblSearch.textContent = t.search;
-    els.search.placeholder = t.searchPH;
-    els.lblPractice.textContent = t.practice;
-    els.clearCats.textContent = t.clearFilters;
-    els.lblSort.textContent = t.sortBy;
-    els.optName.textContent = t.optName;
-    els.optPrimary.textContent = t.optPrimary;
-    els.optCategory.textContent = t.optCategory;
-    const emptyEl = els.detail.querySelector('.empty');
-    if (emptyEl) emptyEl.textContent = t.empty;
+let currentLang='en',data=[],filtered=[],activeId=null,currentBounds=null;
+const map=L.map('map',{zoomControl:true,attributionControl:true});
+L.tileLayer(TILE_URL,{maxZoom:19,attribution:ATTRIB}).addTo(map);
+const layerGroup=L.layerGroup().addTo(map);
+const markers=[];
+let headerMap={};
 
-    // toggle button state
-    if (els.langBtn){
-      const pressed = (lang === 'es');
-      els.langBtn.setAttribute('aria-pressed', pressed ? 'true' : 'false');
-      els.langBtn.textContent = pressed ? 'EN' : 'ES';
-      els.langBtn.title = t.toggleTitle;
-    }
+/* Helpers */
+function buildHeaderMap(fields){
+  headerMap={};
+  (fields||[]).forEach(h=>{
+    if(!h) return;
+    headerMap[h]=h;
+    headerMap[String(h).toLowerCase()]=h;
+    headerMap[String(h).trim().toLowerCase()]=h;
+  });
+}
+function pick(row,keys){
+  for(const k of keys){
+    if(row[k]!==undefined && String(row[k]).trim()!=='') return String(row[k]).trim();
+    const norm=String(k||'').trim().toLowerCase();
+    const real=headerMap[norm];
+    if(real && row[real]!==undefined && String(row[real]).trim()!=='') return String(row[real]).trim();
   }
+  return '';
+}
+function pickLang(row,key){
+  if(currentLang==='es' && FIELD_ALIASES_ES[key]){
+    const vEs=pick(row,FIELD_ALIASES_ES[key]);
+    if(vEs) return vEs;
+  }
+  return pick(row,FIELD_ALIASES[key]||[]);
+}
+const splitCats = s => (s||'').split(/[,;]/).map(v=>v.trim()).filter(Boolean);
 
-  // Start in EN
-  setLang('en');
-
-  // Toggle handler
+/* UI i18n */
+function setLang(lang){
+  currentLang = lang;
+  const t = i18n[lang];
+  document.documentElement.setAttribute('lang', lang);
+  els.lblPartners.textContent = t.partners;
+  els.lblSearch.textContent = t.search;
+  els.search.placeholder = t.searchPH;
+  els.lblPractice.textContent = t.practice;
+  els.clearCats.textContent = t.clearFilters;
+  els.lblSort.textContent = t.sortBy;
+  els.optName.textContent = t.optName;
+  els.optPrimary.textContent = t.optPrimary;
+  els.optCategory.textContent = t.optCategory;
   if (els.langBtn){
-    els.langBtn.addEventListener('click', ()=>{
-      setLang(currentLang === 'en' ? 'es' : 'en');
-      // re-render list/detail so empty msg/localized bits stay synced
-      renderList(filtered);
-      if (!activeId) renderDetail(null);
-      // re-open popup to update label text if any open? (skip: we update on open)
-    });
+    const pressed = (lang === 'es');
+    els.langBtn.setAttribute('aria-pressed', pressed ? 'true' : 'false');
+    els.langBtn.textContent = pressed ? 'EN' : 'ES';
+    els.langBtn.title = t.toggleTitle;
   }
-
-  let data=[],filtered=[],activeId=null,currentBounds=null;
-  const practiceAreas=new Set();
-
-  // Map
-  const map=L.map('map',{zoomControl:true,attributionControl:true});
-  L.tileLayer(TILE_URL,{maxZoom:19,attribution:ATTRIB}).addTo(map);
-  const layerGroup=L.layerGroup().addTo(map);
-  const markers=[];
-
-  // Header mapping helpers
-  let headerMap={};
-  function buildHeaderMap(fields){
-    headerMap={};
-    (fields||[]).forEach(h=>{
-      if(!h) return;
-      headerMap[h]=h;
-      headerMap[String(h).toLowerCase()]=h;
-      headerMap[String(h).trim().toLowerCase()]=h;
-    });
+  // Rebuild chips in the active language and re-render everything
+  renderCategories();
+  applyFilters();
+  // If a partner is open, re-render its detail in the new language
+  if(activeId){
+    const row=filtered.find(r=>r.__id===activeId);
+    if(row) renderDetail(row);
+  } else {
+    renderDetail(null);
   }
-  function pick(row, keys){
-    for(const k of keys){
-      if(row[k]!==undefined && String(row[k]).trim()!=='') return String(row[k]).trim();
-      const norm=String(k||'').trim().toLowerCase();
-      const real=headerMap[norm];
-      if(real && row[real]!==undefined && String(row[real]).trim()!=='') return String(row[real]).trim();
+}
+
+/* Map popup */
+function popupHTML(r){
+  const t = i18n[currentLang];
+  const name=pickLang(r,'name')||'Untitled';
+  const addr=pickLang(r,'address');
+  const site=pick(r,FIELD_ALIASES.website);
+  const cats=splitCats(pickLang(r,'category'));
+  const addrHtml=addr?`<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addr)}" target="_blank" rel="noopener">${addr}</a>`:'';
+  return `<div style="font-family:'Raleway';font-size:13px">
+    <div style="font-weight:600">${name}</div>
+    ${addrHtml?`<div><b>${t.address}:</b> ${addrHtml}</div>`:''}
+    ${cats.length?`<div style="color:#6b7280;font-size:12px">${cats.join(', ')}</div>`:''}
+    ${site?`<a href="${site}" target="_blank" rel="noopener">${t.website}</a>`:''}
+  </div>`;
+}
+function boundsFromRows(rows){
+  const b=L.latLngBounds([]);
+  rows.forEach(r=>{
+    const lat=parseFloat(pick(r,FIELD_ALIASES.lat));
+    const lng=parseFloat(pick(r,FIELD_ALIASES.lng));
+    if(!isNaN(lat)&&!isNaN(lng)) b.extend([lat,lng]);
+  });
+  return b.isValid()? b : L.latLngBounds([[41.85,-87.75],[42.05,-87.55]]);
+}
+
+/* Renderers */
+function renderCategories(){
+  const catsSet=new Set();
+  data.forEach(r=> splitCats(pickLang(r,'category')).forEach(c=>{ if(c) catsSet.add(c); }));
+  const arr=[...catsSet].sort((a,b)=>a.localeCompare(b));
+  els.cats.innerHTML='';
+  arr.forEach(cat=>{
+    const span=document.createElement('span');
+    span.className='chip';
+    span.textContent=cat;
+    span.dataset.value=cat;
+    span.onclick=()=>{span.classList.toggle('active');applyFilters();};
+    els.cats.appendChild(span);
+  });
+}
+function renderMarkers(rows){
+  layerGroup.clearLayers(); markers.length=0;
+  rows.forEach(r=>{
+    const lat=parseFloat(pick(r,FIELD_ALIASES.lat));
+    const lng=parseFloat(pick(r,FIELD_ALIASES.lng));
+    if(isNaN(lat)||isNaN(lng))return;
+    const logo=pick(r,FIELD_ALIASES.logo);
+    let m;
+    if(logo){
+      const icon=L.icon({iconUrl:logo,iconSize:[40,40],iconAnchor:[20,40],popupAnchor:[0,-38],className:'partner-logo-icon'});
+      m=L.marker([lat,lng],{icon});
+    } else {
+      m=L.circleMarker([lat,lng],MARKER_STYLE);
     }
-    return '';
-  }
-  const splitCats = s => (s||'').split(/[,;]/).map(v=>v.trim()).filter(Boolean);
-
-  function popupHTML(r){
-    const t = i18n[currentLang];
-    const name=pick(r,FIELD_ALIASES.name)||'Untitled';
-    const addr=pick(r,FIELD_ALIASES.address);
-    const site=pick(r,FIELD_ALIASES.website);
-    const cats=splitCats(pick(r,FIELD_ALIASES.category));
-    const addrHtml=addr?`<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addr)}" target="_blank" rel="noopener">${addr}</a>`:'';
-    return `<div style="font-family:'Raleway';font-size:13px">
-      <div style="font-weight:600">${name}</div>
-      ${addrHtml?`<div><b>${t.address}:</b> ${addrHtml}</div>`:''}
-      ${cats.length?`<div style="color:#6b7280;font-size:12px">${cats.join(', ')}</div>`:''}
-      ${site?`<a href="${site}" target="_blank" rel="noopener">${t.website}</a>`:''}
-    </div>`;
-  }
-
-  function boundsFromRows(rows){
-    const b=L.latLngBounds([]);
-    rows.forEach(r=>{
-      const lat=parseFloat(pick(r,FIELD_ALIASES.lat));
-      const lng=parseFloat(pick(r,FIELD_ALIASES.lng));
-      if(!isNaN(lat)&&!isNaN(lng)) b.extend([lat,lng]);
-    });
-    return b.isValid()? b : L.latLngBounds([[41.85,-87.75],[42.05,-87.55]]);
-  }
-
-  // Logo markers (fallback to hot pink circle)
-  function renderMarkers(rows){
-    layerGroup.clearLayers(); markers.length=0;
-
-    rows.forEach(r=>{
-      const lat=parseFloat(pick(r,FIELD_ALIASES.lat));
-      const lng=parseFloat(pick(r,FIELD_ALIASES.lng));
-      if(isNaN(lat)||isNaN(lng))return;
-
-      const logo=pick(r,FIELD_ALIASES.logo);
-      let m;
-      if(logo){
-        const icon=L.icon({
-          iconUrl:logo,
-          iconSize:[40,40],
-          iconAnchor:[20,40],     // bottom center
-          popupAnchor:[0,-38],
-          className:'partner-logo-icon'
-        });
-        m=L.marker([lat,lng],{icon});
-      } else {
-        m=L.circleMarker([lat,lng],MARKER_STYLE);
+    m.__id=r.__id;
+    m.bindPopup(()=>popupHTML(r),{maxWidth:300,autoPan:true,autoPanPadding:[30,30]});
+    m.on('click',()=>{selectById(r.__id,true);});
+    m.on('popupclose',()=>{
+      if(activeId===m.__id){
+        activeId=null;
+        renderDetail(null);
+        document.querySelectorAll('.legend-list .item').forEach(el=>el.classList.remove('active'));
       }
-
-      m.__id=r.__id;
-      m.bindPopup(()=>popupHTML(r),{maxWidth:300,autoPan:true,autoPanPadding:[30,30]});
-      m.on('click',()=>{selectById(r.__id,true);});
-      m.on('popupclose',()=>{
-        if(activeId===m.__id){
-          activeId=null;
-          renderDetail(null);
-          document.querySelectorAll('.legend-list .item').forEach(el=>el.classList.remove('active'));
-        }
-        if(currentBounds) map.fitBounds(currentBounds,{padding:[20,20]});
-      });
-
-      markers.push(m);
-      layerGroup.addLayer(m);
+      if(currentBounds) map.fitBounds(currentBounds,{padding:[20,20]});
     });
-
-    currentBounds=boundsFromRows(rows);
-    map.fitBounds(currentBounds,{padding:[20,20]});
-  }
-
-  function renderList(rows){
-    els.list.innerHTML=rows.map(r=>{
-      const id=r.__id;const name=pick(r,FIELD_ALIASES.name)||'Untitled';
-      return `<div class="item${activeId===id?' active':''}" data-id="${id}" role="option" tabindex="0">
-        <h4>${name}</h4>
-        <div class="meta"></div>
-      </div>`;
-    }).join('');
-    els.list.querySelectorAll('.item').forEach(el=>{
-      el.addEventListener('click',()=>{
+    markers.push(m);layerGroup.addLayer(m);
+  });
+  currentBounds=boundsFromRows(rows);
+  map.fitBounds(currentBounds,{padding:[20,20]});
+}
+function renderList(rows){
+  els.list.innerHTML=rows.map(r=>{
+    const id=r.__id;const name=pickLang(r,'name')||'Untitled';
+    return `<div class="item${activeId===id?' active':''}" data-id="${id}" role="option" tabindex="0">
+      <h4>${name}</h4>
+      <div class="meta"></div>
+    </div>`;
+  }).join('');
+  els.list.querySelectorAll('.item').forEach(el=>{
+    el.addEventListener('click',()=>{
+      const id=Number(el.dataset.id);
+      selectById(id,true);
+      const m=markers.find(mm=>mm.__id===id);
+      if(m){ map.once('moveend',()=>m.openPopup()); m.openPopup(); }
+    });
+    el.addEventListener('keydown',e=>{
+      if(e.key==='Enter'||e.key===' '){
+        e.preventDefault();
         const id=Number(el.dataset.id);
         selectById(id,true);
         const m=markers.find(mm=>mm.__id===id);
         if(m){ map.once('moveend',()=>m.openPopup()); m.openPopup(); }
-      });
-      el.addEventListener('keydown',e=>{
-        if(e.key==='Enter'||e.key===' '){
-          e.preventDefault();
-          const id=Number(el.dataset.id);
-          selectById(id,true);
-          const m=markers.find(mm=>mm.__id===id);
-          if(m){ map.once('moveend',()=>m.openPopup()); m.openPopup(); }
-        }
-      });
-    });
-  }
-
-  function renderDetail(r){
-    const t = i18n[currentLang];
-    if(!r){
-      els.detail.innerHTML=`<div class="empty">${t.empty}</div>`;
-      return;
-    }
-    const name=pick(r,FIELD_ALIASES.name)||'Untitled';
-    const logo=pick(r,FIELD_ALIASES.logo);
-    const addr=pick(r,FIELD_ALIASES.address);
-    const site=pick(r,FIELD_ALIASES.website);
-    const desc=pick(r,FIELD_ALIASES.description);
-    const cats=splitCats(pick(r,FIELD_ALIASES.category));
-    const intake=pick(r,FIELD_ALIASES.intake);
-    const geo=pick(r,FIELD_ALIASES.geoElig);
-    const fin=pick(r,FIELD_ALIASES.finElig);
-    const addrHtml=addr?`<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addr)}" target="_blank" rel="noopener">${addr}</a>`:'';
-
-   els.detail.innerHTML=`
-  <div class="detail-header">
-    <div class="titlewrap">
-      ${logo ? `<img class="detail-logo" src="${logo}" alt="${name} logo" loading="lazy">` : ``}
-      <h2>${name}</h2>
-    </div>
-    <button class="detail-close" id="detail-close" aria-label="Close">×</button>
-  </div>
-  ${cats.length?`<div>${cats.map(c=>`<span class="pill">${c}</span>`).join('')}</div>`:''}
-  ${addrHtml?`<div class="kv"><b>${t.address}:</b> ${addrHtml}</div>`:''}
-  ${site?`<div class="kv"><b>${t.websiteLabel}:</b> <a href="${site}" target="_blank" rel="noopener">${site}</a></div>`:''}
-  ${desc?`<div class="section-title">${t.about}</div><div>${desc}</div>`:''}
-  ${intake?`<div class="section-title">${t.intake}</div><div>${intake}</div>`:''}
-  ${geo?`<div class="section-title">${t.geo}</div><div>${geo}</div>`:''}
-  ${fin?`<div class="section-title">${t.fin}</div><div>${fin}</div>`:''}
-`;
-
-    const closeBtn=document.getElementById('detail-close');
-    if(closeBtn){
-      closeBtn.addEventListener('click',()=>{
-        activeId=null;
-        els.detail.innerHTML=`<div class="empty">${t.empty}</div>`;
-        markers.forEach(m=>m.closePopup());
-        if(currentBounds) map.fitBounds(currentBounds,{padding:[20,20]});
-        document.querySelectorAll('.legend-list .item').forEach(el=>el.classList.remove('active'));
-      });
-    }
-  }
-
-  function selectById(id,moveMap){
-    activeId=id;
-    const row=filtered.find(r=>r.__id===activeId);
-    if(!row) return;
-    renderDetail(row);
-    document.querySelectorAll('.legend-list .item').forEach(el=>el.classList.toggle('active', Number(el.dataset.id)===activeId));
-    if(moveMap){
-      const lat=parseFloat(pick(row,FIELD_ALIASES.lat));
-      const lng=parseFloat(pick(row,FIELD_ALIASES.lng));
-      if(!isNaN(lat)&&!isNaN(lng)){
-        map.setView([lat,lng], Math.max(map.getZoom(), 14), {animate:true, duration:0.35});
       }
-    }
-  }
-
-  function applyFilters(){
-    const q=(els.search.value||'').toLowerCase();
-    const activeCats=Array.from(els.cats.querySelectorAll('.chip.active')).map(x=>x.dataset.value);
-    const sortBy=els.sort.value;
-
-    filtered=data.filter(r=>{
-      const cats=splitCats(pick(r,FIELD_ALIASES.category));
-      const inCat=activeCats.length?cats.some(c=>activeCats.includes(c)):true;
-      const hay=[
-        pick(r,FIELD_ALIASES.name),
-        pick(r,FIELD_ALIASES.address),
-        pick(r,FIELD_ALIASES.description),
-        pick(r,FIELD_ALIASES.category),
-        pick(r,FIELD_ALIASES.intake),
-        pick(r,FIELD_ALIASES.geoElig),
-        pick(r,FIELD_ALIASES.finElig)
-      ].filter(Boolean).join(' ').toLowerCase();
-      const inSearch=q?hay.includes(q):true;
-      return inCat && inSearch;
     });
-
-    filtered.sort((a,b)=>{
-      if(sortBy==='primary'){
-        const pa=splitCats(pick(a,FIELD_ALIASES.category))[0]||'';
-        const pb=splitCats(pick(b,FIELD_ALIASES.category))[0]||'';
-        return pa.localeCompare(pb);
-      }
-      if(sortBy==='category'){
-        return pick(a,FIELD_ALIASES.category).localeCompare(pick(b,FIELD_ALIASES.category));
-      }
-      return pick(a,FIELD_ALIASES.name).localeCompare(pick(b,FIELD_ALIASES.name));
-    });
-
-    renderMarkers(filtered);
-    renderList(filtered);
-
-    if(!filtered.find(r=>r.__id===activeId)){
-      activeId=null;
-      renderDetail(null);
-      document.querySelectorAll('.legend-list .item').forEach(el=>el.classList.remove('active'));
-    }
-  }
-
-  // Load CSV and initialize
-  Papa.parse(CSV_URL,{
-    download:true,header:true,skipEmptyLines:true,
-    complete:res=>{
-      const fields = (res.meta && res.meta.fields) || [];
-      buildHeaderMap(fields);
-
-      data=res.data.map((r,idx)=>{
-        const cats=splitCats(pick(r,FIELD_ALIASES.category));
-        cats.forEach(c=>practiceAreas.add(c));
-        return Object.assign({},r,{__id:idx+1});
-      });
-
-      // Render category chips from data
-      els.cats.innerHTML='';
-      Array.from(practiceAreas).sort((a,b)=>a.localeCompare(b)).forEach(cat=>{
-        const span=document.createElement('span');
-        span.className='chip';
-        span.textContent=cat; span.dataset.value=cat;
-        span.onclick=()=>{span.classList.toggle('active');applyFilters();};
-        els.cats.appendChild(span);
-      });
-
-      applyFilters();
-
-      // listeners
-      els.search.addEventListener('input',applyFilters);
-      els.sort.addEventListener('change',applyFilters);
-      els.clearCats.addEventListener('click',()=>{
-        els.cats.querySelectorAll('.chip.active').forEach(ch=>ch.classList.remove('active'));
-        applyFilters();
-      });
-    },
-    error:err=>{
-      console.error('CSV load error',err);
-      els.detail.innerHTML='<div style="color:#b91c1c">CSV could not be loaded. Make sure the Google Sheet is “Published to the web”.</div>';
-    }
   });
+}
+function renderDetail(r){
+  const t = i18n[currentLang];
+  if(!r){ els.detail.innerHTML=`<div class="empty">${t.empty}</div>`; return; }
+  const name=pickLang(r,'name')||'Untitled';
+  const logo=pick(r,FIELD_ALIASES.logo);
+  const addr=pickLang(r,'address');
+  const site=pick(r,FIELD_ALIASES.website);
+  const desc=pickLang(r,'description');
+  const cats=splitCats(pickLang(r,'category'));
+  const intake=pickLang(r,'intake');
+  const geo=pickLang(r,'geoElig');
+  const fin=pickLang(r,'finElig');
+  const addrHtml=addr?`<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addr)}" target="_blank" rel="noopener">${addr}</a>`:'';
+  els.detail.innerHTML=`
+    <div class="detail-header">
+      <div class="titlewrap">
+        ${logo ? `<img class="detail-logo" src="${logo}" alt="${name} logo" loading="lazy">` : ``}
+        <h2>${name}</h2>
+      </div>
+      <button class="detail-close" id="detail-close" aria-label="Close">×</button>
+    </div>
+    ${cats.length?`<div>${cats.map(c=>`<span class="pill">${c}</span>`).join('')}</div>`:''}
+    ${addrHtml?`<div class="kv"><b>${t.address}:</b> ${addrHtml}</div>`:''}
+    ${site?`<div class="kv"><b>${t.websiteLabel}:</b> <a href="${site}" target="_blank" rel="noopener">${site}</a></div>`:''}
+    ${desc?`<div class="section-title">${t.about}</div><div>${desc}</div>`:''}
+    ${intake?`<div class="section-title">${t.intake}</div><div>${intake}</div>`:''}
+    ${geo?`<div class="section-title">${t.geo}</div><div>${geo}</div>`:''}
+    ${fin?`<div class="section-title">${t.fin}</div><div>${fin}</div>`:''}
+  `;
+  const closeBtn=document.getElementById('detail-close');
+  if(closeBtn){
+    closeBtn.addEventListener('click',()=>{
+      activeId=null;
+      els.detail.innerHTML=`<div class="empty">${t.empty}</div>`;
+      markers.forEach(m=>m.closePopup());
+      if(currentBounds) map.fitBounds(currentBounds,{padding:[20,20]});
+      document.querySelectorAll('.legend-list .item').forEach(el=>el.classList.remove('active'));
+    });
+  }
+}
+
+/* Selection */
+function selectById(id,moveMap){
+  activeId=id;
+  const row=filtered.find(r=>r.__id===activeId);
+  if(!row) return;
+  renderDetail(row);
+  document.querySelectorAll('.legend-list .item').forEach(el=>el.classList.toggle('active', Number(el.dataset.id)===activeId));
+  if(moveMap){
+    const lat=parseFloat(pick(row,FIELD_ALIASES.lat));
+    const lng=parseFloat(pick(row,FIELD_ALIASES.lng));
+    if(!isNaN(lat)&&!isNaN(lng)){
+      map.setView([lat,lng], Math.max(map.getZoom(), 14), {animate:true, duration:0.35});
+    }
+  }
+}
+
+/* Filters / search / sort */
+function applyFilters(){
+  const q=(els.search.value||'').toLowerCase();
+  const activeCats=[...els.cats.querySelectorAll('.chip.active')].map(x=>x.dataset.value);
+  const sortBy=els.sort.value;
+
+  filtered=data.filter(r=>{
+    const cats=splitCats(pickLang(r,'category'));
+    const inCat=activeCats.length?cats.some(c=>activeCats.includes(c)):true;
+    const hay=[
+      pickLang(r,'name'),
+      pickLang(r,'address'),
+      pickLang(r,'description'),
+      pickLang(r,'category'),
+      pickLang(r,'intake'),
+      pickLang(r,'geoElig'),
+      pickLang(r,'finElig')
+    ].filter(Boolean).join(' ').toLowerCase();
+    const inSearch=q?hay.includes(q):true;
+    return inCat && inSearch;
+  });
+
+  filtered.sort((a,b)=>{
+    if(sortBy==='primary'){
+      const pa=(splitCats(pickLang(a,'category'))[0]||'');
+      const pb=(splitCats(pickLang(b,'category'))[0]||'');
+      return pa.localeCompare(pb);
+    }
+    if(sortBy==='category'){
+      return pickLang(a,'category').localeCompare(pickLang(b,'category'));
+    }
+    return pickLang(a,'name').localeCompare(pickLang(b,'name'));
+  });
+
+  renderMarkers(filtered);
+  renderList(filtered);
+
+  if(!filtered.find(r=>r.__id===activeId)){
+    activeId=null;
+    renderDetail(null);
+    document.querySelectorAll('.legend-list .item').forEach(el=>el.classList.remove('active'));
+  }
+}
+
+/* Load CSV */
+Papa.parse(CSV_URL,{
+  download:true,header:true,skipEmptyLines:true,
+  complete:res=>{
+    const fields=(res.meta && res.meta.fields)||[];
+    buildHeaderMap(fields);
+    data=res.data.map((r,idx)=>Object.assign({},r,{__id:idx+1}));
+    renderCategories();
+    applyFilters();
+
+    // listeners
+    els.search.addEventListener('input',applyFilters);
+    els.sort.addEventListener('change',applyFilters);
+    els.clearCats.addEventListener('click',()=>{
+      els.cats.querySelectorAll('.chip.active').forEach(ch=>ch.classList.remove('active'));
+      applyFilters();
+    });
+
+    // language toggle
+    if(els.langBtn){
+      els.langBtn.addEventListener('click', ()=>{
+        setLang(currentLang==='en' ? 'es' : 'en');
+      });
+    }
+  },
+  error:err=>{
+    console.error('CSV load error',err);
+    els.detail.innerHTML='<div style="color:#b91c1c">CSV could not be loaded. Make sure the Google Sheet is “Published to the web”.</div>';
+  }
+});
+
+// initialize UI language
+setLang('en');
+
 })();
 </script>
 </body>
