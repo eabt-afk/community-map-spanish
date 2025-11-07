@@ -57,13 +57,14 @@ body{
   display: flex;
   flex-direction: column;
   position: relative;
+  padding-top: 60px;
 }
 .lang-toggle{
   position:absolute; top:13px; right:13px;
   border:1px solid var(--hotpink);
   background:#fff; color:var(--hotpink);
-  border-radius:999px; padding:8px 12px;
-  font-size:12px; cursor:pointer;
+  border-radius:999px; padding:8px 14px;
+  font-size:13px; cursor:pointer;
   font-family:"Raleway", sans-serif; font-weight:700;
 }
 .lang-toggle[aria-pressed="true"]{
@@ -231,7 +232,7 @@ body{
       </aside>
 
       <section class="controls">
-        <button id="lang-toggle" class="lang-toggle" aria-pressed="false" title="Switch to Spanish">ES</button>
+        <button id="lang-toggle" class="lang-toggle" aria-pressed="false" title="Switch to Spanish">Español</button>
         <div class="row">
           <label id="lbl-search">Search</label>
           <input id="search" type="text" placeholder="Search partners, services, or notes…"/>
@@ -371,11 +372,12 @@ function setLang(lang){
   els.optPrimary.textContent = t.optPrimary;
   els.optCategory.textContent = t.optCategory;
   if (els.langBtn){
-    const pressed = (lang === 'es');
-    els.langBtn.setAttribute('aria-pressed', pressed ? 'true' : 'false');
-    els.langBtn.textContent = pressed ? 'EN' : 'ES';
-    els.langBtn.title = t.toggleTitle;
-  }
+  const pressed = (lang === 'es');
+  els.langBtn.setAttribute('aria-pressed', pressed ? 'true' : 'false');
+  // Show the language you will switch TO
+  els.langBtn.textContent = pressed ? 'English' : 'Español';
+  els.langBtn.title = pressed ? 'Switch to English' : 'Switch to Spanish';
+}
   // Rebuild chips in the active language and re-render everything
   renderCategories();
   applyFilters();
