@@ -144,11 +144,42 @@ body{
   border-radius:14px; padding:14px;
   color:#111;
 }
-.detail-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;}
-.detail-logo{
-  width:40px; height:40px; border-radius:8px;
-  border:1px solid #e5e7eb; background:#fff;
-  object-fit:contain; flex:0 0 auto;
+/* Align logo to the left of partner name */
+.detail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.detail-header .titlewrap {
+  display: flex;
+  align-items: center;
+  gap: 10px; /* space between logo and name */
+  flex: 1;
+  min-width: 0;
+}
+
+.detail-logo {
+  width: 45px;
+  height: 45px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  object-fit: contain;
+  flex: 0 0 auto;
+}
+
+.detail h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #111;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 }
 .pill{
   display:inline-block;
