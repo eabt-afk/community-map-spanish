@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Activism Partners Map</title>
+<title>Community Law Office Partners Map</title>
 
 <!-- Raleway font + Leaflet -->
 <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -59,12 +59,48 @@ body{
   position: relative;
 }
 
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
 /* Top row that only holds the language toggle */
 .row-top{
   display:flex;
   justify-content:flex-end;
   align-items:center;
   margin-bottom: 6px;
+}
+
+/* Search + ZIP row (side-by-side 75/25) */
+.row-search-zip{
+  display:flex;
+  align-items:flex-end;
+  gap:12px;            /* space between the two inputs */
+  width:100%;
+  margin-bottom: 16px;
+  min-width:0;         /* prevent overflow */
+}
+.col-search{ flex: 3 1 0; min-width:0; }
+.col-zip{    flex: 1 1 0; min-width:0; }
+
+/* Labels */
+.controls label,
+.legend-header {
+  color: var(--hotpink);
+  font-weight: 800;
+  font-size: 18px;
+  line-height: 1.2;
+}
+
+/* Inputs */
+.input{
+  width:100%;
+  padding:11px;
+  border:1px solid #d1d5db;
+  border-radius:10px;
+  background:#fff;
+  color:#111;
+  font-family:"Raleway",sans-serif;
 }
 
 /* Language toggle pill */
@@ -87,30 +123,11 @@ body{
   border-radius:14px; color:#111;
   padding:14px; box-shadow:0 2px 8px rgba(0,0,0,.08);
 }
-.controls label,
-.legend-header {
-  color: var(--hotpink);
-  font-weight: 800;
-  font-size: 18px;
-  line-height: 1.2;
-}
 .controls .row {margin-bottom: 16px;}
-  /* Force extra space above the Sort by section */
-.controls .row:nth-of-type(4) {
-  margin-top: 16px !important;
-}
-.row-inline{display:flex;align-items:center;justify-content:space-between;gap:8px}
+/* Force extra space above the Sort by section */
+.controls .row:nth-of-type(4) { margin-top: 16px !important; }
 
-#search {
-  width:90%; padding:11px;
-  border:1px solid #d1d5db; border-radius:10px;
-  background:#fff; color:#111;
-  font-family:"Raleway",sans-serif;
-}
-  #lbl-search {
-  display: block;
-  margin-bottom: 14px; /* adjust between 4–10px for preference */
-}
+.row-inline{display:flex;align-items:center;justify-content:space-between;gap:8px}
 
 /* Chips */
 .chips{display:flex;flex-wrap:wrap;gap:8px}
@@ -130,7 +147,7 @@ body{
   color:var(--hotpink);
   font-weight:600;
 }
-  #category-filters { margin-bottom: 16px; }
+#category-filters { margin-bottom: 16px; }
 .btn-clear {
   border:1px solid var(--hotpink);
   background:#fff;
@@ -210,6 +227,8 @@ body{
 
 @media(max-width:1000px){
   .top-panels{grid-template-columns:1fr;}
+  .row-search-zip{flex-direction:column;}
+  .col-search, .col-zip{flex: 1 1 auto; width:100%;}
 }
 </style>
 </head>
@@ -228,9 +247,16 @@ body{
           <button id="lang-toggle" class="lang-toggle" aria-pressed="false" title="Switch to Spanish">Español</button>
         </div>
 
-        <div class="row">
-          <label id="lbl-search">Search</label>
-          <input id="search" type="text" placeholder="Search partners, services, or notes…"/>
+        <!-- Search + ZIP in one row -->
+        <div class="row row-search-zip">
+          <div class="col-search">
+            <label id="lbl-search">Search</label>
+            <input id="search" class="input" type="text" placeholder="Search partners, services, or notes…"/>
+          </div>
+          <div class="col-zip">
+            <label id="lbl-zip">ZIP</label>
+            <input id="zip" class="input" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="Enter ZIP"/>
+          </div>
         </div>
 
         <div class="row row-inline">
@@ -241,7 +267,7 @@ body{
 
         <div class="row">
           <label id="lbl-sort">Sort by</label>
-          <select id="sort">
+          <select id="sort" class="input" style="padding:8px 10px;">
             <option value="name" id="opt-name">Name (A→Z)</option>
             <option value="primary" id="opt-primary">Main Practice Area (A→Z)</option>
             <option value="category" id="opt-category">Practice Areas (A→Z)</option>
@@ -280,7 +306,8 @@ body{
     intake:['_Intake','Intake'],
     geoElig:['_GeographicEligibility','Geographic Eligibility'],
     finElig:['_FinancialEligibility','Financial Eligibility'],
-    logo:['_Logo','Logo']
+    logo:['_Logo','Logo'],
+    zips:['_ZipCodes','ZipCodes','Zip Codes']          // <-- ZIP column
   };
   /* Spanish columns */
   const FIELD_ALIASES_ES={
@@ -296,6 +323,7 @@ body{
   /* UI strings */
   const i18n={
     en:{partners:'Partners',search:'Search',searchPH:'Search partners, services, or notes…',
+        zip:'ZIP', zipPH:'Enter ZIP',
         practice:'Practice Areas',clearFilters:'Clear filters',sortBy:'Sort by',
         optName:'Name (A→Z)',optPrimary:'Main Practice Area (A→Z)',optCategory:'Practice Areas (A→Z)',
         empty:'Select a partner from the list of names to find out more!',
@@ -303,6 +331,7 @@ body{
         intake:'Intake',geo:'Geographic Eligibility',fin:'Financial Eligibility',
         toggleTitle:'Switch to Spanish', toggleBtnNext:'Español'},
     es:{partners:'Socios',search:'Buscar',searchPH:'Buscar organizaciones, servicios o notas…',
+        zip:'Código postal', zipPH:'Ingresa el código',
         practice:'Áreas de práctica',clearFilters:'Borrar filtros',sortBy:'Ordenar por',
         optName:'Nombre (A→Z)',optPrimary:'Área principal (A→Z)',optCategory:'Áreas de práctica (A→Z)',
         empty:'¡Selecciona una organización de la lista para ver más información!',
@@ -315,29 +344,39 @@ body{
   const els={
     langBtn:document.getElementById('lang-toggle'),
     lblPartners:document.getElementById('lbl-partners'),
+
     lblSearch:document.getElementById('lbl-search'),
     search:document.getElementById('search'),
+
+    lblZip:document.getElementById('lbl-zip'),
+    zip:document.getElementById('zip'),
+
     lblPractice:document.getElementById('lbl-practice'),
     clearCats:document.getElementById('clear-cats'),
+    cats:document.getElementById('category-filters'),
+
     lblSort:document.getElementById('lbl-sort'),
     sort:document.getElementById('sort'),
     optName:document.getElementById('opt-name'),
     optPrimary:document.getElementById('opt-primary'),
     optCategory:document.getElementById('opt-category'),
-    cats:document.getElementById('category-filters'),
+
     list:document.getElementById('list'),
     detail:document.getElementById('detail'),
     emptyMsg:document.getElementById('empty-msg')
   };
 
+  /* State */
   let currentLang='en', data=[], filtered=[], activeId=null, currentBounds=null;
+  let headerMap={};
+
+  /* Map */
   const map=L.map('map',{zoomControl:true,attributionControl:true});
   L.tileLayer(TILE_URL,{maxZoom:19,attribution:ATTRIB}).addTo(map);
   const layerGroup=L.layerGroup().addTo(map);
   const markers=[];
-  let headerMap={};
 
-  /* Header helpers */
+  /* Helpers */
   function buildHeaderMap(fields){
     headerMap={};
     (fields||[]).forEach(h=>{
@@ -365,6 +404,10 @@ body{
   }
   const splitCats = s => (s||'').split(/[,;]/).map(v=>v.trim()).filter(Boolean);
 
+  function normalizeZip(z){
+    return (z||'').toString().trim().slice(-5).replace(/\D/g,''); // keep 5 digits if possible
+  }
+
   /* Language switch */
   function setLang(lang){
     currentLang = lang;
@@ -374,8 +417,13 @@ body{
     els.lblPartners.textContent = t.partners;
     els.lblSearch.textContent = t.search;
     els.search.placeholder = t.searchPH;
+
+    els.lblZip.textContent = t.zip;
+    els.zip.placeholder = t.zipPH;
+
     els.lblPractice.textContent = t.practice;
     els.clearCats.textContent = t.clearFilters;
+
     els.lblSort.textContent = t.sortBy;
     els.optName.textContent = t.optName;
     els.optPrimary.textContent = t.optPrimary;
@@ -540,7 +588,6 @@ body{
     }
   }
 
-  /* Selection */
   function selectById(id,moveMap){
     activeId=id;
     const row=filtered.find(r=>r.__id===activeId);
@@ -556,15 +603,20 @@ body{
     }
   }
 
-  /* Search / filter / sort */
+  /* Search / filter / sort (with ZIP filter) */
   function applyFilters(){
-    const q=(els.search.value||'').toLowerCase();
+    const q=(els.search.value||'').toLowerCase().trim();
+    const zipRaw=(els.zip.value||'').trim();
+    const zip = normalizeZip(zipRaw); // 5-digit numeric if present
+
     const activeCats=[...els.cats.querySelectorAll('.chip.active')].map(x=>x.dataset.value);
     const sortBy=els.sort.value;
 
     filtered=data.filter(r=>{
       const cats=splitCats(pickLang(r,'category'));
       const inCat=activeCats.length?cats.some(c=>activeCats.includes(c)):true;
+
+      // Text search haystack
       const hay=[
         pickLang(r,'name'),
         pickLang(r,'address'),
@@ -575,7 +627,11 @@ body{
         pickLang(r,'finElig')
       ].filter(Boolean).join(' ').toLowerCase();
       const inSearch=q?hay.includes(q):true;
-      return inCat && inSearch;
+
+      // ZIP filter (precomputed r.__zipSet)
+      const inZip = zip ? (r.__zipSet && r.__zipSet.has(zip)) : true;
+
+      return inCat && inSearch && inZip;
     });
 
     filtered.sort((a,b)=>{
@@ -606,12 +662,21 @@ body{
     complete:res=>{
       const fields=(res.meta && res.meta.fields)||[];
       buildHeaderMap(fields);
-      data=res.data.map((r,idx)=>Object.assign({},r,{__id:idx+1}));
+
+      data=res.data.map((r,idx)=>{
+        // Precompute a Set of normalized ZIPs for fast membership
+        const zcol = pick(r, FIELD_ALIASES.zips);
+        const zips = (zcol||'').split(',').map(s=>normalizeZip(s)).filter(Boolean);
+        const zipSet = new Set(zips);
+        return Object.assign({},r,{__id:idx+1, __zipSet: zipSet});
+      });
+
       renderCategories();
       applyFilters();
 
       // listeners
       els.search.addEventListener('input',applyFilters);
+      els.zip.addEventListener('input',applyFilters);
       els.sort.addEventListener('change',applyFilters);
       els.clearCats.addEventListener('click',()=>{
         els.cats.querySelectorAll('.chip.active').forEach(ch=>ch.classList.remove('active'));
